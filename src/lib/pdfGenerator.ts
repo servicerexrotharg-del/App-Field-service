@@ -63,10 +63,18 @@ export function generateCleanPDFReport(report: FieldServiceReport): void {
     }
   };
 
-  // Dibuja la barra de título de sección, garantizando que quede junto
+  // Espacio vertical uniforme entre secciones (aire visual)
+  const SECTION_GAP = 6;
+
+  // Dibuja la barra de título de sección, garantizando que quede junta
   // con al menos minContentHeight mm de su contenido (no huérfana al pie).
   const drawSectionHeader = (title: string, minContentHeight: number = 15) => {
-    checkPageBreak(7 + 3 + minContentHeight);
+    y += SECTION_GAP;
+    // +2 de margen de seguridad para evitar casos borde de 1mm
+    if (y + 10 + minContentHeight + 2 > PAGE_BOTTOM) {
+      doc.addPage();
+      y = 15;
+    }
     doc.setFillColor(primaryBlue[0], primaryBlue[1], primaryBlue[2]);
     doc.rect(10, y, 190, 7, 'F');
     doc.setTextColor(255, 255, 255);
@@ -122,6 +130,7 @@ export function generateCleanPDFReport(report: FieldServiceReport): void {
   }
 
   // 1. DATOS GENERALES
+  y -= SECTION_GAP; // la primera sección no lleva espacio previo adicional
   drawSectionHeader('1. DATOS GENERALES');
   doc.setFontSize(8.5);
   doc.setTextColor(darkGray[0], darkGray[1], darkGray[2]);
@@ -271,14 +280,12 @@ export function generateCleanPDFReport(report: FieldServiceReport): void {
 
   // 7. REGISTRO FOTOGRÁFICO
   if (report.registroFotografico && report.registroFotografico.length > 0) {
-    y += 4;
-
     // Render photos 2 per row
     const photoWidth = 55;
     const photoHeight = 45;
 
-    // El encabezado debe quedar junto con al menos la primera fila de fotos
-    drawSectionHeader('7. REGISTRO FOTOGRÁFICO', photoHeight + 8);
+    // El encabezado debe quedar junto con al menos la primera fila completa de fotos
+    drawSectionHeader('7. REGISTRO FOTOGRÁFICO', photoHeight + 12);
     y += 2;
 
     for (let i = 0; i < report.registroFotografico.length; i += 2) {
@@ -323,13 +330,11 @@ export function generateCleanPDFReport(report: FieldServiceReport): void {
   }
 
   // 8. CONFORMIDAD Y FIRMAS (3 Signatures)
-  y += 4;
-
   const sigBoxWidth = 57;
   const sigBoxHeight = 28;
 
-  // El encabezado debe quedar junto con los recuadros de firma completos
-  drawSectionHeader('8. CONFORMIDAD Y FIRMAS', sigBoxHeight + 14);
+  // El encabezado debe quedar junto con los recuadros de firma y sus rótulos
+  drawSectionHeader('8. CONFORMIDAD Y FIRMAS', sigBoxHeight + 16);
   y += 2;
 
   // Signature 1: Técnico
