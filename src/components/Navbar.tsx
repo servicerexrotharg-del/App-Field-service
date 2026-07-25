@@ -1,6 +1,7 @@
 import React from 'react';
 import { Database, LogOut, Plus, FileSpreadsheet, ShieldAlert } from 'lucide-react';
 import { ViewTab } from '../types';
+import { REXROTH_LOGO_BASE64 } from '../assets/logoDataUri';
 
 interface NavbarProps {
   currentTab: ViewTab;
@@ -21,6 +22,11 @@ export const Navbar: React.FC<NavbarProps> = ({
     <header className="bg-slate-900 border-b border-slate-800 px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-4 sticky top-0 z-30 shadow-md">
       {/* Brand Header */}
       <div className="flex items-center gap-3">
+        <img
+          src={REXROTH_LOGO_BASE64}
+          alt="Rexroth Service Logo"
+          className="w-10 h-10 object-contain rounded-lg bg-slate-950 border border-slate-800 p-0.5 shadow-sm"
+        />
         <div>
           <h1 className="text-sm sm:text-base font-bold text-slate-100 leading-tight">
             Formulario de asistencia técnica

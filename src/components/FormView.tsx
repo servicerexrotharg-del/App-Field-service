@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { REXROTH_LOGO_BASE64 } from '../assets/logoDataUri';
 import {
   Client,
   CategoryOption,
@@ -274,11 +275,12 @@ export const FormView: React.FC<FormViewProps> = ({
       {/* Header Bar & Quick Save */}
       <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 sm:p-5 flex flex-wrap items-center justify-between gap-4 shadow-lg">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-tr from-cyan-600 to-blue-600 p-0.5 shadow-md flex items-center justify-center">
-            <div className="w-full h-full bg-slate-950 rounded-[10px] flex flex-col items-center justify-center p-1">
-              <span className="text-[10px] font-black text-cyan-400">REXROTH</span>
-              <span className="text-[7px] font-bold text-white">SERVICE</span>
-            </div>
+          <div className="w-12 h-12 rounded-xl bg-slate-950 border border-slate-800 p-1 shadow-md flex items-center justify-center shrink-0">
+            <img
+              src={REXROTH_LOGO_BASE64}
+              alt="Rexroth Service Logo"
+              className="w-full h-full object-contain rounded-lg"
+            />
           </div>
 
           <div>
@@ -320,7 +322,7 @@ export const FormView: React.FC<FormViewProps> = ({
       <div ref={formPrintRef} className="space-y-6 bg-slate-950 text-slate-100 p-1 rounded-xl">
 
         {/* Encabezado del Informe con Logo */}
-        <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-5 flex items-center justify-between gap-4 shadow-md">
+        <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-4 sm:p-5 flex items-center justify-between gap-4 shadow-md">
           <div className="space-y-1">
             <div className="flex items-center gap-3 flex-wrap">
               <h2 className="text-lg sm:text-xl font-extrabold text-slate-100 tracking-tight">
@@ -335,11 +337,11 @@ export const FormView: React.FC<FormViewProps> = ({
             </p>
           </div>
 
-          <div className="flex-shrink-0 flex items-center justify-center p-1 bg-slate-950/90 border border-cyan-500/30 rounded-full shadow-lg shadow-cyan-950/50">
+          <div className="flex-shrink-0 flex items-center justify-center p-1.5 bg-slate-950 border border-slate-800 rounded-xl shadow-md">
             <img
-              src="/rexroth_logo.jpg"
+              src={REXROTH_LOGO_BASE64}
               alt="Rexroth Service Logo"
-              className="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded-full border border-slate-700/80 shadow-md"
+              className="h-14 sm:h-20 w-auto max-w-[160px] object-contain rounded-lg"
             />
           </div>
         </div>

@@ -2,6 +2,7 @@ import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { FieldServiceReport } from '../types';
 import { calculateReportHourBreakdown, formatHoursLabel } from './hoursCalculator';
+import { REXROTH_LOGO_BASE64 } from '../assets/logoDataUri';
 
 export async function generatePDFFromElement(element: HTMLElement, report: FieldServiceReport): Promise<void> {
   const canvas = await html2canvas(element, {
@@ -51,13 +52,13 @@ export function generateCleanPDFReport(report: FieldServiceReport): void {
 
   // Header Box
   doc.setFillColor(245, 247, 250);
-  doc.rect(10, 10, 190, 26, 'F');
+  doc.rect(10, 10, 190, 28, 'F');
   doc.setDrawColor(200, 200, 200);
-  doc.rect(10, 10, 190, 26, 'S');
+  doc.rect(10, 10, 190, 28, 'S');
 
   // Title (Left aligned)
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(13);
+  doc.setFontSize(12);
   doc.setTextColor(primaryBlue[0], primaryBlue[1], primaryBlue[2]);
   doc.text('FORMULARIO DE ASISTENCIA TÉCNICA', 14, 18);
 
@@ -67,18 +68,25 @@ export function generateCleanPDFReport(report: FieldServiceReport): void {
   doc.text('Rexroth Service - Field Service Report', 14, 24);
   doc.text(`Nº FORMULARIO: ${report.numeroFormulario || 'FR82155-4'}`, 14, 30);
 
-  // Right Info (Aligned right at 195mm)
+  // Middle/Right Info (Aligned at 150mm)
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(11);
+  doc.setFontSize(10);
   doc.setTextColor(primaryBlue[0], primaryBlue[1], primaryBlue[2]);
-  doc.text(`Nº Servicio: ${report.numeroServicio}`, 195, 18, { align: 'right' });
+  doc.text(`Nº Servicio: ${report.numeroServicio}`, 150, 18, { align: 'right' });
 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8.5);
   doc.setTextColor(darkGray[0], darkGray[1], darkGray[2]);
-  doc.text(`Fecha: ${report.fecha}`, 195, 24, { align: 'right' });
+  doc.text(`Fecha: ${report.fecha}`, 150, 24, { align: 'right' });
 
-  let y = 42;
+  // Logo Image on far top right (x=154, y=11.5, width=43, height=25)
+  try {
+    doc.addImage(REXROTH_LOGO_BASE64, 'JPEG', 154, 11.5, 43, 25);
+  } catch (err) {
+    console.error('Error drawing logo in PDF:', err);
+  }
+
+  let y = 44;
 
   // 1. DATOS GENERALES
   doc.setFillColor(primaryBlue[0], primaryBlue[1], primaryBlue[2]);
