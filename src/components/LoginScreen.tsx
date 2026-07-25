@@ -53,8 +53,12 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
             }}
             style={{ opacity: 1, transition: 'opacity 0.5s ease-in-out' }}
           >
+            <source src="/Video presentacion.MP4" type="video/mp4" />
+            <source src="/Video%20presentacion.MP4" type="video/mp4" />
+            <source src="/Video presentacion.mp4" type="video/mp4" />
             <source src="/video_presentacion.mp4" type="video/mp4" />
             <source src="/video de presentacion.mp4" type="video/mp4" />
+            <source src="/Video_presentacion.mp4" type="video/mp4" />
             <source src="/video_presentacion.webm" type="video/webm" />
             <source src="/assets/video_presentacion.mp4" type="video/mp4" />
           </video>
