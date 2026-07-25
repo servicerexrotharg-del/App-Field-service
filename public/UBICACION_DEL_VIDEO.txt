@@ -1,0 +1,9 @@
+Ubicación para el video de presentación Rexroth Service:
+
+Guarde el archivo de video en la carpeta /public de su proyecto con alguno de estos nombres:
+
+1. /public/video_presentacion.mp4
+2. /public/video de presentacion.mp4
+3. /public/video_presentacion.webm
+
+Al guardarlo ahí, el reproductor de la pantalla de bienvenida lo cargará y lo reproducirá automáticamente en bucle (loop) dentro del recuadro de Rexroth Service.

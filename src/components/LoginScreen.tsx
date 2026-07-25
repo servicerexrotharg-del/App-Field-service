@@ -35,15 +35,36 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
       <div className="w-full max-w-md bg-slate-900/80 border border-slate-800 rounded-2xl p-6 sm:p-8 shadow-2xl backdrop-blur-xl z-10 flex flex-col space-y-6">
         
         {/* Animated Emblem / Video Loop Header */}
-        <div className="relative w-full aspect-video bg-gradient-to-br from-slate-900 via-slate-800 to-cyan-950 rounded-xl overflow-hidden border border-slate-700/60 shadow-inner flex flex-col items-center justify-center p-4">
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-cyan-500/20 via-transparent to-transparent animate-pulse"></div>
-          
-          {/* Emblem Simulation */}
-          <div className="relative z-10 flex flex-col items-center text-center space-y-1">
+        <div className="relative w-full aspect-video bg-gradient-to-br from-slate-900 via-slate-800 to-cyan-950 rounded-xl overflow-hidden border border-slate-700/60 shadow-inner flex flex-col items-center justify-center p-0 group">
+          {/* Background Video Player */}
+          <video
+            autoPlay
+            loop
+            muted
+            playsInline
+            controls={false}
+            className="absolute inset-0 w-full h-full object-cover rounded-xl z-10"
+            onCanPlay={(e) => {
+              (e.target as HTMLElement).style.opacity = '1';
+            }}
+            onError={(e) => {
+              // Hide video element on error so fallback emblem shows smoothly
+              (e.target as HTMLElement).style.display = 'none';
+            }}
+            style={{ opacity: 1, transition: 'opacity 0.5s ease-in-out' }}
+          >
+            <source src="/video_presentacion.mp4" type="video/mp4" />
+            <source src="/video de presentacion.mp4" type="video/mp4" />
+            <source src="/video_presentacion.webm" type="video/webm" />
+            <source src="/assets/video_presentacion.mp4" type="video/mp4" />
+          </video>
+
+          {/* Emblem Fallback / Watermark Badge */}
+          <div className="relative z-0 flex flex-col items-center text-center space-y-1 p-4 pointer-events-none">
             <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-cyan-500 via-blue-600 to-cyan-300 p-0.5 shadow-lg shadow-cyan-500/20 mb-1">
-              <div className="w-full h-full bg-slate-950 rounded-full flex flex-col items-center justify-center border border-cyan-400/40">
-                <span className="text-[11px] font-black tracking-wider text-cyan-400 uppercase">REXROTH</span>
-                <span className="text-[9px] font-extrabold text-white tracking-widest uppercase">SERVICE</span>
+              <div className="w-full h-full bg-slate-950/90 rounded-full flex flex-col items-center justify-center border border-cyan-400/40">
+                <span className="text-[10px] font-black tracking-wider text-cyan-400 uppercase">REXROTH</span>
+                <span className="text-[8px] font-extrabold text-white tracking-widest uppercase">SERVICE</span>
               </div>
             </div>
             <div className="text-xs font-black tracking-widest text-cyan-400 uppercase">REXROTH SERVICE</div>
