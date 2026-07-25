@@ -319,6 +319,31 @@ export const FormView: React.FC<FormViewProps> = ({
       {/* Main Form Container for PDF capture */}
       <div ref={formPrintRef} className="space-y-6 bg-slate-950 text-slate-100 p-1 rounded-xl">
 
+        {/* Encabezado del Informe con Logo */}
+        <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-5 flex items-center justify-between gap-4 shadow-md">
+          <div className="space-y-1">
+            <div className="flex items-center gap-3 flex-wrap">
+              <h2 className="text-lg sm:text-xl font-extrabold text-slate-100 tracking-tight">
+                Formulario de Asistencia Técnica
+              </h2>
+              <span className="px-2.5 py-0.5 bg-cyan-950 border border-cyan-800 text-cyan-400 font-mono text-xs font-bold rounded-md">
+                FR82155-4
+              </span>
+            </div>
+            <p className="text-xs text-slate-400 font-medium">
+              Bosch Rexroth Field Service System • Servicio Técnico Especializado
+            </p>
+          </div>
+
+          <div className="flex-shrink-0 flex items-center justify-center p-1 bg-slate-950/90 border border-cyan-500/30 rounded-full shadow-lg shadow-cyan-950/50">
+            <img
+              src="/rexroth_logo.jpg"
+              alt="Rexroth Service Logo"
+              className="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded-full border border-slate-700/80 shadow-md"
+            />
+          </div>
+        </div>
+
         {/* 1. SECCIÓN DATOS GENERALES */}
         <section className="bg-slate-900/80 border border-slate-800 rounded-xl p-5 space-y-4">
           <div className="flex items-center gap-2 border-b border-slate-800 pb-3">
