@@ -275,11 +275,11 @@ export const FormView: React.FC<FormViewProps> = ({
       {/* Header Bar & Quick Save */}
       <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 sm:p-5 flex flex-wrap items-center justify-between gap-4 shadow-lg">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-slate-950 border border-slate-800 p-1 shadow-md flex items-center justify-center shrink-0">
+          <div className="w-20 h-12 rounded-xl border border-slate-800 shadow-md overflow-hidden shrink-0">
             <img
               src={LOGO_BASE64}
               alt="Rexroth Service Logo"
-              className="w-full h-full object-contain rounded-lg"
+              className="w-full h-full object-cover"
             />
           </div>
 
@@ -337,12 +337,12 @@ export const FormView: React.FC<FormViewProps> = ({
             </p>
           </div>
 
-          <div className="flex-shrink-0 flex items-center justify-center p-1.5 bg-slate-950 border border-slate-800 rounded-xl shadow-md">
+          <div className="flex-shrink-0 overflow-hidden border border-slate-800 rounded-xl shadow-md">
             <img
               src={LOGO_BASE64}
               alt="Rexroth Service Logo"
               style={{ height: '85px' }}
-              className="w-auto object-contain rounded-lg"
+              className="w-auto object-cover"
             />
           </div>
         </div>

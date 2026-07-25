@@ -25,7 +25,7 @@ export const Navbar: React.FC<NavbarProps> = ({
         <img
           src={LOGO_BASE64}
           alt="Rexroth Service Logo"
-          className="w-10 h-10 object-contain rounded-lg bg-slate-950 border border-slate-800 p-0.5 shadow-sm"
+          className="h-10 w-16 object-cover rounded-lg border border-slate-800 shadow-sm"
         />
         <div>
           <h1 className="text-sm sm:text-base font-bold text-slate-100 leading-tight">
