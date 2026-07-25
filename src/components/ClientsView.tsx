@@ -67,10 +67,10 @@ export const ClientsView: React.FC<ClientsViewProps> = ({ clients, onSaveClient,
   };
 
   const handleResetList = async () => {
-    if (confirm('¿Desea restaurar la base de datos de clientes con la lista oficial de 131 clientes?')) {
+    if (confirm('¿Desea restaurar la base de datos de clientes con la lista oficial de 376 clientes del archivo CSV?')) {
       await resetClientsToOfficialList();
       if (onRefreshClients) await onRefreshClients();
-      setSyncStatus({ type: 'success', msg: 'Lista de clientes restablecida a los 131 clientes oficiales.' });
+      setSyncStatus({ type: 'success', msg: 'Lista de clientes restablecida a los 376 clientes oficiales del CSV.' });
     }
   };
 
@@ -103,10 +103,10 @@ export const ClientsView: React.FC<ClientsViewProps> = ({ clients, onSaveClient,
           <button
             onClick={handleResetList}
             className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-lg text-xs flex items-center gap-1.5 cursor-pointer"
-            title="Restaurar a los 131 clientes oficiales"
+            title="Restaurar a los 376 clientes oficiales"
           >
             <RefreshCw className="w-3.5 h-3.5 text-amber-400" />
-            <span>Cargar Lista Oficial (131)</span>
+            <span>Cargar Lista Oficial (376)</span>
           </button>
 
           <button
@@ -159,7 +159,7 @@ export const ClientsView: React.FC<ClientsViewProps> = ({ clients, onSaveClient,
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Buscar por CUIT/ID, Nombre o Provincia..."
+            placeholder="Buscar por ID/Identificación, Nombre o Ubicación..."
             className="w-full bg-slate-950 border border-slate-800 rounded-lg pl-9 pr-3 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-cyan-500"
           />
         </div>
@@ -248,7 +248,7 @@ export const ClientsView: React.FC<ClientsViewProps> = ({ clients, onSaveClient,
           <table className="w-full text-xs text-left border-collapse">
             <thead className="sticky top-0 z-10">
               <tr className="bg-slate-950 text-slate-400 uppercase text-[10px] tracking-wider border-b border-slate-800">
-                <th className="p-3.5 font-bold">Identificación / CUIT</th>
+                <th className="p-3.5 font-bold">Identificación</th>
                 <th className="p-3.5 font-bold">Razón Social</th>
                 <th className="p-3.5 font-bold">Ubicación / Dirección</th>
                 <th className="p-3.5 font-bold text-right">Acciones</th>

@@ -19,16 +19,8 @@ export const Navbar: React.FC<NavbarProps> = ({
 }) => {
   return (
     <header className="bg-slate-900 border-b border-slate-800 px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-4 sticky top-0 z-30 shadow-md">
-      {/* Brand & Logo Header */}
+      {/* Brand Header */}
       <div className="flex items-center gap-3">
-        {/* Emblem / Logo Icon */}
-        <div className="w-10 h-10 rounded-lg bg-gradient-to-tr from-cyan-600 via-blue-600 to-cyan-400 p-0.5 shadow-md shadow-cyan-500/20 flex items-center justify-center">
-          <div className="w-full h-full bg-slate-950 rounded-[7px] flex flex-col items-center justify-center">
-            <span className="text-[9px] font-black tracking-wider text-cyan-400 uppercase">REXROTH</span>
-            <span className="text-[7px] font-bold text-white uppercase">SERVICE</span>
-          </div>
-        </div>
-
         <div>
           <h1 className="text-sm sm:text-base font-bold text-slate-100 leading-tight">
             Formulario de asistencia técnica
