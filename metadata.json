@@ -1,0 +1,6 @@
+{
+  "name": "Reporte de Field Service",
+  "description": "Formulario de Asistencia Técnica de Field Service con Supabase, cálculo de horas, dictado por voz, registro fotográfico, firmas y PDF.",
+  "requestFramePermissions": ["camera", "microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
