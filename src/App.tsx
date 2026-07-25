@@ -175,6 +175,10 @@ export default function App() {
               clients={clients}
               onSaveClient={handleSaveClient}
               onDeleteClient={handleDeleteClient}
+              onRefreshClients={async () => {
+                const refreshed = await getClients();
+                setClients(refreshed);
+              }}
             />
           )}
 
