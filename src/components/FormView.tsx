@@ -687,7 +687,7 @@ export const FormView: React.FC<FormViewProps> = ({
             const totalEspecialista = Math.round((hourBreakdown.especialista.viaje + hourBreakdown.especialista.normales + hourBreakdown.especialista.extras50 + hourBreakdown.especialista.extras100) * 100) / 100;
             const totalTecnico = Math.round((hourBreakdown.tecnico.viaje + hourBreakdown.tecnico.normales + hourBreakdown.tecnico.extras50 + hourBreakdown.tecnico.extras100) * 100) / 100;
             const totalAyudante = Math.round((hourBreakdown.ayudante.viaje + hourBreakdown.ayudante.normales + hourBreakdown.ayudante.extras50 + hourBreakdown.ayudante.extras100) * 100) / 100;
-            const totalHorasTrabajoGeneral = Math.round((hourBreakdown.totalViaje + totalEspecialista + totalTecnico + totalAyudante) * 100) / 100;
+            const totalHorasTrabajoGeneral = Math.round((totalEspecialista + totalTecnico + totalAyudante) * 100) / 100;
 
             return (
               <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-3">

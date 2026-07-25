@@ -41,6 +41,9 @@ export function calculateDayHours(log: DayWorkLog): SingleDayCalculation {
   }
 
   const totalMinutes = Math.max(0, endMin - startMin);
+  if (totalMinutes === 0) {
+    return { totalTrabajoMinutes: 0, normalesMinutes: 0, extras50Minutes: 0, extras100Minutes: 0 };
+  }
 
   // If holiday (feriado), ALL worked hours are Extras 100%
   if (log.esFeriado) {
@@ -81,7 +84,7 @@ export function calculateDayHours(log: DayWorkLog): SingleDayCalculation {
     const timeOfDay = m % (24 * 60); // 0..1439
 
     if (isSaturday) {
-      // Saturday: before 13:00 -> Normales? Saturday before 13:00 usually normal or 50%. Standard is normal up to 13:00, 50% after 13:00 until 21:00, 100% after 21:00
+      // Saturday: before 13:00 -> Normales; 13:00 to 21:00 -> Extras 50%; after 21:00 -> Extras 100%
       if (timeOfDay < 13 * 60) {
         normales += interval;
       } else if (timeOfDay < 21 * 60) {
@@ -93,7 +96,7 @@ export function calculateDayHours(log: DayWorkLog): SingleDayCalculation {
       // Monday - Friday
       // Normal: 07:00 to 18:00 (420 to 1080)
       // Extras 50%: 18:00 to 21:00 (1080 to 1260)
-      // Extras 100%: 21:00 to 06:00 (1260 to 1440, and 0 to 360)
+      // Extras 100%: 21:00 to 07:00 (1260 to 1440, and 0 to 420)
       if (timeOfDay >= 7 * 60 && timeOfDay < 18 * 60) {
         normales += interval;
       } else if (timeOfDay >= 18 * 60 && timeOfDay < 21 * 60) {
@@ -151,7 +154,6 @@ export function calculateReportHourBreakdown(
     const viajeHs = log.horaViaje || 0;
 
     result.totalViaje += viajeHs;
-    result.totalTrabajo += trabHs;
     result.totalNormales += normHs;
     result.totalExtras50 += ex50Hs;
     result.totalExtras100 += ex100Hs;
@@ -188,6 +190,32 @@ export function calculateReportHourBreakdown(
       });
     }
   });
+
+  // Round values
+  result.especialista.viaje = Math.round(result.especialista.viaje * 100) / 100;
+  result.especialista.normales = Math.round(result.especialista.normales * 100) / 100;
+  result.especialista.extras50 = Math.round(result.especialista.extras50 * 100) / 100;
+  result.especialista.extras100 = Math.round(result.especialista.extras100 * 100) / 100;
+
+  result.tecnico.viaje = Math.round(result.tecnico.viaje * 100) / 100;
+  result.tecnico.normales = Math.round(result.tecnico.normales * 100) / 100;
+  result.tecnico.extras50 = Math.round(result.tecnico.extras50 * 100) / 100;
+  result.tecnico.extras100 = Math.round(result.tecnico.extras100 * 100) / 100;
+
+  result.ayudante.viaje = Math.round(result.ayudante.viaje * 100) / 100;
+  result.ayudante.normales = Math.round(result.ayudante.normales * 100) / 100;
+  result.ayudante.extras50 = Math.round(result.ayudante.extras50 * 100) / 100;
+  result.ayudante.extras100 = Math.round(result.ayudante.extras100 * 100) / 100;
+
+  const totalEsp = result.especialista.viaje + result.especialista.normales + result.especialista.extras50 + result.especialista.extras100;
+  const totalTec = result.tecnico.viaje + result.tecnico.normales + result.tecnico.extras50 + result.tecnico.extras100;
+  const totalAyu = result.ayudante.viaje + result.ayudante.normales + result.ayudante.extras50 + result.ayudante.extras100;
+
+  result.totalTrabajo = Math.round((totalEsp + totalTec + totalAyu) * 100) / 100;
+  result.totalViaje = Math.round(result.totalViaje * 100) / 100;
+  result.totalNormales = Math.round(result.totalNormales * 100) / 100;
+  result.totalExtras50 = Math.round(result.totalExtras50 * 100) / 100;
+  result.totalExtras100 = Math.round(result.totalExtras100 * 100) / 100;
 
   return result;
 }
