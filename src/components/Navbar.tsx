@@ -1,7 +1,7 @@
 import React from 'react';
 import { Database, LogOut, Plus, FileSpreadsheet, ShieldAlert } from 'lucide-react';
 import { ViewTab } from '../types';
-import { REXROTH_LOGO_BASE64 } from '../assets/logoDataUri';
+import { LOGO_BASE64 } from '../logo';
 
 interface NavbarProps {
   currentTab: ViewTab;
@@ -23,7 +23,7 @@ export const Navbar: React.FC<NavbarProps> = ({
       {/* Brand Header */}
       <div className="flex items-center gap-3">
         <img
-          src={REXROTH_LOGO_BASE64}
+          src={LOGO_BASE64}
           alt="Rexroth Service Logo"
           className="w-10 h-10 object-contain rounded-lg bg-slate-950 border border-slate-800 p-0.5 shadow-sm"
         />

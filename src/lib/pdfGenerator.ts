@@ -2,7 +2,7 @@ import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { FieldServiceReport } from '../types';
 import { calculateReportHourBreakdown, formatHoursLabel } from './hoursCalculator';
-import { REXROTH_LOGO_BASE64 } from '../assets/logoDataUri';
+import { LOGO_BASE64 } from '../logo';
 
 export async function generatePDFFromElement(element: HTMLElement, report: FieldServiceReport): Promise<void> {
   const canvas = await html2canvas(element, {
@@ -81,7 +81,7 @@ export function generateCleanPDFReport(report: FieldServiceReport): void {
 
   // Logo Image on far top right (x=154, y=11.5, width=43, height=25)
   try {
-    doc.addImage(REXROTH_LOGO_BASE64, 'JPEG', 154, 11.5, 43, 25);
+    doc.addImage(LOGO_BASE64, 'JPEG', 154, 11.5, 43, 25);
   } catch (err) {
     console.error('Error drawing logo in PDF:', err);
   }

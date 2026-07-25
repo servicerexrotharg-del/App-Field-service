@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { REXROTH_LOGO_BASE64 } from '../assets/logoDataUri';
+import { LOGO_BASE64 } from '../logo';
 import {
   Client,
   CategoryOption,
@@ -277,7 +277,7 @@ export const FormView: React.FC<FormViewProps> = ({
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 rounded-xl bg-slate-950 border border-slate-800 p-1 shadow-md flex items-center justify-center shrink-0">
             <img
-              src={REXROTH_LOGO_BASE64}
+              src={LOGO_BASE64}
               alt="Rexroth Service Logo"
               className="w-full h-full object-contain rounded-lg"
             />
@@ -339,9 +339,10 @@ export const FormView: React.FC<FormViewProps> = ({
 
           <div className="flex-shrink-0 flex items-center justify-center p-1.5 bg-slate-950 border border-slate-800 rounded-xl shadow-md">
             <img
-              src={REXROTH_LOGO_BASE64}
+              src={LOGO_BASE64}
               alt="Rexroth Service Logo"
-              className="h-14 sm:h-20 w-auto max-w-[160px] object-contain rounded-lg"
+              style={{ height: '85px' }}
+              className="w-auto object-contain rounded-lg"
             />
           </div>
         </div>
