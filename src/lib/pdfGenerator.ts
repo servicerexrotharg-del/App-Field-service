@@ -50,6 +50,41 @@ export function generateCleanPDFReport(report: FieldServiceReport): void {
   const primaryBlue = [0, 43, 91]; // Rexroth Dark Blue
   const darkGray = [40, 40, 40];
 
+  // --- Helpers de paginación dinámica ---
+  // La página útil termina en PAGE_BOTTOM; solo se agrega página nueva
+  // cuando el próximo bloque realmente no entra en el espacio restante.
+  const PAGE_BOTTOM = 282; // A4 (297mm) menos margen inferior
+  let y = 44;
+
+  const checkPageBreak = (neededHeight: number) => {
+    if (y + neededHeight > PAGE_BOTTOM) {
+      doc.addPage();
+      y = 15;
+    }
+  };
+
+  // Dibuja la barra de título de sección, garantizando que quede junto
+  // con al menos minContentHeight mm de su contenido (no huérfana al pie).
+  const drawSectionHeader = (title: string, minContentHeight: number = 15) => {
+    checkPageBreak(7 + 3 + minContentHeight);
+    doc.setFillColor(primaryBlue[0], primaryBlue[1], primaryBlue[2]);
+    doc.rect(10, y, 190, 7, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9.5);
+    doc.text(title, 14, y + 5);
+    y += 10;
+  };
+
+  // Escribe líneas de texto con salto de página automático línea a línea.
+  const writeLines = (lines: string[], x: number, lineHeight: number = 4.5) => {
+    lines.forEach((line) => {
+      checkPageBreak(lineHeight);
+      doc.text(line, x, y);
+      y += lineHeight;
+    });
+  };
+
   // Header Box
   doc.setFillColor(245, 247, 250);
   doc.rect(10, 10, 190, 28, 'F');
@@ -86,17 +121,8 @@ export function generateCleanPDFReport(report: FieldServiceReport): void {
     console.error('Error drawing logo in PDF:', err);
   }
 
-  let y = 44;
-
   // 1. DATOS GENERALES
-  doc.setFillColor(primaryBlue[0], primaryBlue[1], primaryBlue[2]);
-  doc.rect(10, y, 190, 7, 'F');
-  doc.setTextColor(255, 255, 255);
-  doc.setFontSize(9.5);
-  doc.setFont('helvetica', 'bold');
-  doc.text('1. DATOS GENERALES', 14, y + 5);
-
-  y += 10;
+  drawSectionHeader('1. DATOS GENERALES');
   doc.setFontSize(8.5);
   doc.setTextColor(darkGray[0], darkGray[1], darkGray[2]);
 
@@ -140,30 +166,17 @@ export function generateCleanPDFReport(report: FieldServiceReport): void {
   y += 10;
 
   // 2. DETALLE DEL PROBLEMA
-  doc.setFillColor(primaryBlue[0], primaryBlue[1], primaryBlue[2]);
-  doc.rect(10, y, 190, 7, 'F');
-  doc.setTextColor(255, 255, 255);
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(9.5);
-  doc.text('2. DETALLE DEL PROBLEMA', 14, y + 5);
-
-  y += 10;
+  drawSectionHeader('2. DETALLE DEL PROBLEMA', 10);
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8.5);
   doc.setTextColor(darkGray[0], darkGray[1], darkGray[2]);
   const splitProb = doc.splitTextToSize(report.detalleProblema || 'Sin detalle especificado.', 180);
-  doc.text(splitProb, 12, y);
-  y += splitProb.length * 4.5 + 4;
+  writeLines(splitProb, 12);
+  y += 4;
 
   // 3. TÉCNICOS Y HORAS CONSUMIDAS
-  doc.setFillColor(primaryBlue[0], primaryBlue[1], primaryBlue[2]);
-  doc.rect(10, y, 190, 7, 'F');
-  doc.setTextColor(255, 255, 255);
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(9.5);
-  doc.text('3. TÉCNICOS Y HORAS CONSUMIDAS', 14, y + 5);
-
-  y += 10;
+  // La tabla completa (encabezado + 3 filas + total) mide ~35mm: se mantiene junta.
+  drawSectionHeader('3. TÉCNICOS Y HORAS CONSUMIDAS', 35);
 
   // Table header
   doc.setFillColor(230, 235, 245);
@@ -204,66 +217,37 @@ export function generateCleanPDFReport(report: FieldServiceReport): void {
   y += 9;
 
   // 4. TAREAS REALIZADAS
-  doc.setFillColor(primaryBlue[0], primaryBlue[1], primaryBlue[2]);
-  doc.rect(10, y, 190, 7, 'F');
-  doc.setTextColor(255, 255, 255);
-  doc.setFontSize(9.5);
-  doc.text('4. TAREAS REALIZADAS', 14, y + 5);
-
-  y += 10;
+  drawSectionHeader('4. TAREAS REALIZADAS', 10);
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8.5);
   doc.setTextColor(darkGray[0], darkGray[1], darkGray[2]);
   const splitTasks = doc.splitTextToSize(report.tareasRealizadas || 'Sin registro de tareas.', 180);
-  doc.text(splitTasks, 12, y);
-  y += splitTasks.length * 4.5 + 6;
-
-  // Check page break before section 5
-  if (y > 240) {
-    doc.addPage();
-    y = 15;
-  }
+  writeLines(splitTasks, 12);
+  y += 6;
 
   // 5. RECOMENDACIÓN & CONCLUSIÓN
-  doc.setFillColor(primaryBlue[0], primaryBlue[1], primaryBlue[2]);
-  doc.rect(10, y, 190, 7, 'F');
-  doc.setTextColor(255, 255, 255);
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(9.5);
-  doc.text('5. RECOMENDACIÓN & CONCLUSIÓN', 14, y + 5);
-
-  y += 10;
+  drawSectionHeader('5. RECOMENDACIÓN & CONCLUSIÓN', 10);
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8.5);
   doc.setTextColor(darkGray[0], darkGray[1], darkGray[2]);
   const splitRec = doc.splitTextToSize(report.recomendacionConclusion || 'Sin conclusiones.', 180);
-  doc.text(splitRec, 12, y);
-  y += splitRec.length * 4.5 + 8;
+  writeLines(splitRec, 12);
+  y += 8;
 
   // 6. INSTRUMENTOS & MATERIALES
   if ((report.instrumentosUtilizados && report.instrumentosUtilizados.length > 0) || (report.materialesUtilizados && report.materialesUtilizados.length > 0)) {
-    if (y > 230) {
-      doc.addPage();
-      y = 15;
-    }
-
-    doc.setFillColor(primaryBlue[0], primaryBlue[1], primaryBlue[2]);
-    doc.rect(10, y, 190, 7, 'F');
-    doc.setTextColor(255, 255, 255);
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(9.5);
-    doc.text('6. INSTRUMENTOS Y MATERIALES UTILIZADOS', 14, y + 5);
-
-    y += 10;
+    drawSectionHeader('6. INSTRUMENTOS Y MATERIALES UTILIZADOS', 12);
     doc.setFontSize(8.5);
     doc.setTextColor(darkGray[0], darkGray[1], darkGray[2]);
 
     if (report.instrumentosUtilizados && report.instrumentosUtilizados.length > 0) {
+      checkPageBreak(10);
       doc.setFont('helvetica', 'bold');
       doc.text('Instrumentos:', 12, y);
       y += 5;
       doc.setFont('helvetica', 'normal');
       report.instrumentosUtilizados.forEach((inst) => {
+        checkPageBreak(4.5);
         doc.text(`• [Cant: ${inst.cantidad}] ${inst.descripcion}`, 16, y);
         y += 4.5;
       });
@@ -271,11 +255,13 @@ export function generateCleanPDFReport(report: FieldServiceReport): void {
     }
 
     if (report.materialesUtilizados && report.materialesUtilizados.length > 0) {
+      checkPageBreak(10);
       doc.setFont('helvetica', 'bold');
       doc.text('Materiales:', 12, y);
       y += 5;
       doc.setFont('helvetica', 'normal');
       report.materialesUtilizados.forEach((mat) => {
+        checkPageBreak(4.5);
         doc.text(`• [Cant: ${mat.cantidad}] ${mat.codigoMNR ? `(MNR: ${mat.codigoMNR}) ` : ''}${mat.descripcion}`, 16, y);
         y += 4.5;
       });
@@ -285,31 +271,18 @@ export function generateCleanPDFReport(report: FieldServiceReport): void {
 
   // 7. REGISTRO FOTOGRÁFICO
   if (report.registroFotografico && report.registroFotografico.length > 0) {
-    if (y > 200) {
-      doc.addPage();
-      y = 15;
-    } else {
-      y += 4;
-    }
-
-    doc.setFillColor(primaryBlue[0], primaryBlue[1], primaryBlue[2]);
-    doc.rect(10, y, 190, 7, 'F');
-    doc.setTextColor(255, 255, 255);
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(9.5);
-    doc.text('7. REGISTRO FOTOGRÁFICO', 14, y + 5);
-
-    y += 12;
+    y += 4;
 
     // Render photos 2 per row
     const photoWidth = 55;
     const photoHeight = 45;
 
+    // El encabezado debe quedar junto con al menos la primera fila de fotos
+    drawSectionHeader('7. REGISTRO FOTOGRÁFICO', photoHeight + 8);
+    y += 2;
+
     for (let i = 0; i < report.registroFotografico.length; i += 2) {
-      if (y + photoHeight + 10 > 280) {
-        doc.addPage();
-        y = 15;
-      }
+      checkPageBreak(photoHeight + 8);
 
       const p1 = report.registroFotografico[i];
       const p2 = report.registroFotografico[i + 1];
@@ -350,24 +323,14 @@ export function generateCleanPDFReport(report: FieldServiceReport): void {
   }
 
   // 8. CONFORMIDAD Y FIRMAS (3 Signatures)
-  if (y > 225) {
-    doc.addPage();
-    y = 15;
-  } else {
-    y += 4;
-  }
-
-  doc.setFillColor(primaryBlue[0], primaryBlue[1], primaryBlue[2]);
-  doc.rect(10, y, 190, 7, 'F');
-  doc.setTextColor(255, 255, 255);
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(9.5);
-  doc.text('8. CONFORMIDAD Y FIRMAS', 14, y + 5);
-
-  y += 12;
+  y += 4;
 
   const sigBoxWidth = 57;
   const sigBoxHeight = 28;
+
+  // El encabezado debe quedar junto con los recuadros de firma completos
+  drawSectionHeader('8. CONFORMIDAD Y FIRMAS', sigBoxHeight + 14);
+  y += 2;
 
   // Signature 1: Técnico
   doc.setDrawColor(180, 180, 180);
