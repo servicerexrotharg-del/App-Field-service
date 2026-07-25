@@ -61,7 +61,7 @@ export const FormView: React.FC<FormViewProps> = ({
   const [tipoServicio, setTipoServicio] = useState(initialReport?.tipoServicio || 'IH');
   const [categoria, setCategoria] = useState(initialReport?.categoria || 'Servicio');
   const [numeroOrdenCompra, setNumeroOrdenCompra] = useState(initialReport?.numeroOrdenCompra || '');
-  const [numeroContrato, setNumeroContrato] = useState(initialReport?.numeroContrato || '6700344049 Ternium');
+  const [numeroContrato, setNumeroContrato] = useState(initialReport?.numeroContrato ?? '');
   const [numeroOrdenTrabajo, setNumeroOrdenTrabajo] = useState(initialReport?.numeroOrdenTrabajo || '');
 
   const [detalleProblema, setDetalleProblema] = useState(initialReport?.detalleProblema || '');
@@ -112,8 +112,11 @@ export const FormView: React.FC<FormViewProps> = ({
   const [aclaracionTecnico, setAclaracionTecnico] = useState(initialReport?.firmas?.aclaracionTecnico || 'Técnico Responsable');
   const [firmaCliente, setFirmaCliente] = useState(initialReport?.firmas?.firmaCliente || '');
   const [aclaracionCliente, setAclaracionCliente] = useState(initialReport?.firmas?.aclaracionCliente || 'Supervisión de Mantenimiento');
+  const [firmaSupervisor, setFirmaSupervisor] = useState(initialReport?.firmas?.firmaSupervisor || '');
+  const [aclaracionSupervisor, setAclaracionSupervisor] = useState(initialReport?.firmas?.aclaracionSupervisor || 'Supervisor de Servicio');
 
   const [isSaving, setIsSaving] = useState(false);
+  const savingRef = useRef(false);
   const [saveStatus, setSaveStatus] = useState<string | null>(null);
 
   // Auto fill address when selecting client
@@ -213,6 +216,8 @@ export const FormView: React.FC<FormViewProps> = ({
 
   // Save & Print PDF Handler
   const handleSaveAndPDF = async () => {
+    if (savingRef.current || isSaving) return;
+    savingRef.current = true;
     setIsSaving(true);
     setSaveStatus(null);
 
@@ -241,6 +246,8 @@ export const FormView: React.FC<FormViewProps> = ({
         aclaracionTecnico,
         firmaCliente,
         aclaracionCliente,
+        firmaSupervisor,
+        aclaracionSupervisor,
       },
       createdAt: initialReport?.createdAt || new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -250,17 +257,14 @@ export const FormView: React.FC<FormViewProps> = ({
       await onSaveReport(reportToSave);
       setSaveStatus('Formulario guardado con éxito.');
 
-      // Generate PDF
-      if (formPrintRef.current) {
-        await generatePDFFromElement(formPrintRef.current, reportToSave);
-      } else {
-        generateCleanPDFReport(reportToSave);
-      }
+      // Generate & print PDF
+      generateCleanPDFReport(reportToSave);
     } catch (e) {
       console.error(e);
       setSaveStatus('Error al guardar el formulario.');
     } finally {
       setIsSaving(false);
+      savingRef.current = false;
     }
   };
 
@@ -380,7 +384,7 @@ export const FormView: React.FC<FormViewProps> = ({
               >
                 {serviceTypes.map((st) => (
                   <option key={st.id} value={st.codigo}>
-                    {st.codigo} - {st.nombre}
+                    {st.codigo}
                   </option>
                 ))}
               </select>
@@ -408,6 +412,7 @@ export const FormView: React.FC<FormViewProps> = ({
                 onChange={(e) => setNumeroContrato(e.target.value)}
                 className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-cyan-500"
               >
+                <option value="">-- Sin Contrato (Vacío) --</option>
                 {contracts.map((con) => (
                   <option key={con.id} value={`${con.numero} ${con.descripcion}`}>
                     {con.numero} - {con.descripcion}
@@ -515,13 +520,22 @@ export const FormView: React.FC<FormViewProps> = ({
                     type="number"
                     min={1}
                     max={20}
-                    value={t.cantidad}
+                    value={t.cantidad === 0 ? '' : t.cantidad}
                     onChange={(e) => {
+                      const val = e.target.value;
+                      const parsed = val === '' ? 0 : parseInt(val, 10);
                       const updated = [...tecnicosInsumidos];
-                      updated[idx].cantidad = parseInt(e.target.value) || 1;
+                      updated[idx].cantidad = isNaN(parsed) ? 0 : parsed;
                       setTecnicosInsumidos(updated);
                     }}
-                    className="w-full bg-slate-800 border border-slate-700 rounded px-2.5 py-1.5 text-xs text-slate-200"
+                    onBlur={() => {
+                      if (t.cantidad < 1) {
+                        const updated = [...tecnicosInsumidos];
+                        updated[idx].cantidad = 1;
+                        setTecnicosInsumidos(updated);
+                      }
+                    }}
+                    className="w-full bg-slate-800 border border-slate-700 rounded px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-cyan-500"
                   />
                 </div>
 
@@ -985,7 +999,7 @@ export const FormView: React.FC<FormViewProps> = ({
             </h3>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* Tech Signature */}
             <div className="space-y-3">
               <SignatureCanvas
@@ -1022,7 +1036,28 @@ export const FormView: React.FC<FormViewProps> = ({
                   type="text"
                   value={aclaracionCliente}
                   onChange={(e) => setAclaracionCliente(e.target.value)}
-                  placeholder="Nombre y Apellido Supervisor / Cliente"
+                  placeholder="Nombre y Apellido Cliente"
+                  className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-200"
+                />
+              </div>
+            </div>
+
+            {/* Supervisor Signature */}
+            <div className="space-y-3">
+              <SignatureCanvas
+                label="Firma Supervisor"
+                initialValue={firmaSupervisor}
+                onSave={setFirmaSupervisor}
+              />
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold uppercase text-slate-400">
+                  Aclaración de Firma Supervisor
+                </label>
+                <input
+                  type="text"
+                  value={aclaracionSupervisor}
+                  onChange={(e) => setAclaracionSupervisor(e.target.value)}
+                  placeholder="Nombre y Apellido Supervisor"
                   className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-200"
                 />
               </div>

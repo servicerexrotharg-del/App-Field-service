@@ -97,6 +97,8 @@ export interface Signatures {
   aclaracionTecnico: string;
   firmaCliente: string; // base64
   aclaracionCliente: string;
+  firmaSupervisor?: string; // base64
+  aclaracionSupervisor?: string;
 }
 
 export interface FieldServiceReport {

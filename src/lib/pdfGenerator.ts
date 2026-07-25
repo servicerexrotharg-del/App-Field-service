@@ -39,7 +39,7 @@ export async function generatePDFFromElement(element: HTMLElement, report: Field
 }
 
 /**
- * Alternative programmatic PDF generator for clean printing
+ * Programmatic PDF generator for clean printing
  */
 export function generateCleanPDFReport(report: FieldServiceReport): void {
   const doc = new jsPDF('p', 'mm', 'a4');
@@ -47,45 +47,49 @@ export function generateCleanPDFReport(report: FieldServiceReport): void {
 
   // Colors
   const primaryBlue = [0, 43, 91]; // Rexroth Dark Blue
-  const accentCyan = [0, 168, 204];
   const darkGray = [40, 40, 40];
 
   // Header Box
   doc.setFillColor(245, 247, 250);
-  doc.rect(10, 10, 190, 28, 'F');
+  doc.rect(10, 10, 190, 26, 'F');
   doc.setDrawColor(200, 200, 200);
-  doc.rect(10, 10, 190, 28, 'S');
+  doc.rect(10, 10, 190, 26, 'S');
 
-  // Title
+  // Title (Left aligned)
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(16);
+  doc.setFontSize(13);
   doc.setTextColor(primaryBlue[0], primaryBlue[1], primaryBlue[2]);
-  doc.text('FORMULARIO DE ASISTENCIA TÉCNICA', 55, 20);
+  doc.text('FORMULARIO DE ASISTENCIA TÉCNICA', 14, 18);
 
-  doc.setFontSize(10);
+  doc.setFontSize(8.5);
+  doc.setFont('helvetica', 'normal');
   doc.setTextColor(100, 100, 100);
-  doc.text('Rexroth Service - Field Service Report', 55, 26);
-  doc.text(`Nº FORMULARIO: ${report.numeroFormulario || 'FR82155-4'}`, 55, 32);
+  doc.text('Rexroth Service - Field Service Report', 14, 24);
+  doc.text(`Nº FORMULARIO: ${report.numeroFormulario || 'FR82155-4'}`, 14, 30);
 
-  doc.setFontSize(12);
+  // Right Info (Aligned right at 195mm)
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(11);
   doc.setTextColor(primaryBlue[0], primaryBlue[1], primaryBlue[2]);
-  doc.text(`Nº Servicio: ${report.numeroServicio}`, 145, 20);
-  doc.setFontSize(9);
+  doc.text(`Nº Servicio: ${report.numeroServicio}`, 195, 18, { align: 'right' });
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8.5);
   doc.setTextColor(darkGray[0], darkGray[1], darkGray[2]);
-  doc.text(`Fecha: ${report.fecha}`, 145, 26);
+  doc.text(`Fecha: ${report.fecha}`, 195, 24, { align: 'right' });
 
-  let y = 44;
+  let y = 42;
 
-  // General Data Box
+  // 1. DATOS GENERALES
   doc.setFillColor(primaryBlue[0], primaryBlue[1], primaryBlue[2]);
   doc.rect(10, y, 190, 7, 'F');
   doc.setTextColor(255, 255, 255);
-  doc.setFontSize(10);
+  doc.setFontSize(9.5);
   doc.setFont('helvetica', 'bold');
   doc.text('1. DATOS GENERALES', 14, y + 5);
 
   y += 10;
-  doc.setFontSize(9);
+  doc.setFontSize(8.5);
   doc.setTextColor(darkGray[0], darkGray[1], darkGray[2]);
 
   doc.setFont('helvetica', 'bold');
@@ -127,25 +131,28 @@ export function generateCleanPDFReport(report: FieldServiceReport): void {
 
   y += 10;
 
-  // Problem Detail Box
+  // 2. DETALLE DEL PROBLEMA
   doc.setFillColor(primaryBlue[0], primaryBlue[1], primaryBlue[2]);
   doc.rect(10, y, 190, 7, 'F');
   doc.setTextColor(255, 255, 255);
   doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9.5);
   doc.text('2. DETALLE DEL PROBLEMA', 14, y + 5);
 
   y += 10;
   doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8.5);
   doc.setTextColor(darkGray[0], darkGray[1], darkGray[2]);
   const splitProb = doc.splitTextToSize(report.detalleProblema || 'Sin detalle especificado.', 180);
   doc.text(splitProb, 12, y);
-  y += splitProb.length * 5 + 4;
+  y += splitProb.length * 4.5 + 4;
 
-  // Hours Breakdown
+  // 3. TÉCNICOS Y HORAS CONSUMIDAS
   doc.setFillColor(primaryBlue[0], primaryBlue[1], primaryBlue[2]);
   doc.rect(10, y, 190, 7, 'F');
   doc.setTextColor(255, 255, 255);
   doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9.5);
   doc.text('3. TÉCNICOS Y HORAS CONSUMIDAS', 14, y + 5);
 
   y += 10;
@@ -155,6 +162,7 @@ export function generateCleanPDFReport(report: FieldServiceReport): void {
   doc.rect(10, y, 190, 6, 'F');
   doc.setTextColor(primaryBlue[0], primaryBlue[1], primaryBlue[2]);
   doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8.5);
   doc.text('Categoría Técnico', 14, y + 4.5);
   doc.text('Cant', 60, y + 4.5);
   doc.text('H. Viaje', 80, y + 4.5);
@@ -179,84 +187,238 @@ export function generateCleanPDFReport(report: FieldServiceReport): void {
     doc.text(`${r.data.normales} hs`, 110, y);
     doc.text(`${r.data.extras50} hs`, 140, y);
     doc.text(`${r.data.extras100} hs`, 170, y);
-    y += 6;
+    y += 5.5;
   });
 
   doc.setFont('helvetica', 'bold');
   doc.text(`TOTAL GENERAL HORAS TRABAJADAS: ${breakdown.totalTrabajo} hs | VIAJE: ${breakdown.totalViaje} hs`, 14, y + 2);
 
-  y += 10;
+  y += 9;
 
-  // Tasks Box
+  // 4. TAREAS REALIZADAS
   doc.setFillColor(primaryBlue[0], primaryBlue[1], primaryBlue[2]);
   doc.rect(10, y, 190, 7, 'F');
   doc.setTextColor(255, 255, 255);
+  doc.setFontSize(9.5);
   doc.text('4. TAREAS REALIZADAS', 14, y + 5);
 
   y += 10;
   doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8.5);
   doc.setTextColor(darkGray[0], darkGray[1], darkGray[2]);
   const splitTasks = doc.splitTextToSize(report.tareasRealizadas || 'Sin registro de tareas.', 180);
   doc.text(splitTasks, 12, y);
-  y += splitTasks.length * 5 + 6;
+  y += splitTasks.length * 4.5 + 6;
 
-  // Recommendations
-  if (y > 230) {
+  // Check page break before section 5
+  if (y > 240) {
     doc.addPage();
-    y = 20;
+    y = 15;
   }
 
+  // 5. RECOMENDACIÓN & CONCLUSIÓN
   doc.setFillColor(primaryBlue[0], primaryBlue[1], primaryBlue[2]);
   doc.rect(10, y, 190, 7, 'F');
   doc.setTextColor(255, 255, 255);
   doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9.5);
   doc.text('5. RECOMENDACIÓN & CONCLUSIÓN', 14, y + 5);
 
   y += 10;
   doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8.5);
   doc.setTextColor(darkGray[0], darkGray[1], darkGray[2]);
   const splitRec = doc.splitTextToSize(report.recomendacionConclusion || 'Sin conclusiones.', 180);
   doc.text(splitRec, 12, y);
-  y += splitRec.length * 5 + 10;
+  y += splitRec.length * 4.5 + 8;
 
-  // Signatures
-  if (y > 220) {
+  // 6. INSTRUMENTOS & MATERIALES
+  if ((report.instrumentosUtilizados && report.instrumentosUtilizados.length > 0) || (report.materialesUtilizados && report.materialesUtilizados.length > 0)) {
+    if (y > 230) {
+      doc.addPage();
+      y = 15;
+    }
+
+    doc.setFillColor(primaryBlue[0], primaryBlue[1], primaryBlue[2]);
+    doc.rect(10, y, 190, 7, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9.5);
+    doc.text('6. INSTRUMENTOS Y MATERIALES UTILIZADOS', 14, y + 5);
+
+    y += 10;
+    doc.setFontSize(8.5);
+    doc.setTextColor(darkGray[0], darkGray[1], darkGray[2]);
+
+    if (report.instrumentosUtilizados && report.instrumentosUtilizados.length > 0) {
+      doc.setFont('helvetica', 'bold');
+      doc.text('Instrumentos:', 12, y);
+      y += 5;
+      doc.setFont('helvetica', 'normal');
+      report.instrumentosUtilizados.forEach((inst) => {
+        doc.text(`• [Cant: ${inst.cantidad}] ${inst.descripcion}`, 16, y);
+        y += 4.5;
+      });
+      y += 2;
+    }
+
+    if (report.materialesUtilizados && report.materialesUtilizados.length > 0) {
+      doc.setFont('helvetica', 'bold');
+      doc.text('Materiales:', 12, y);
+      y += 5;
+      doc.setFont('helvetica', 'normal');
+      report.materialesUtilizados.forEach((mat) => {
+        doc.text(`• [Cant: ${mat.cantidad}] ${mat.codigoMNR ? `(MNR: ${mat.codigoMNR}) ` : ''}${mat.descripcion}`, 16, y);
+        y += 4.5;
+      });
+      y += 2;
+    }
+  }
+
+  // 7. REGISTRO FOTOGRÁFICO
+  if (report.registroFotografico && report.registroFotografico.length > 0) {
+    if (y > 200) {
+      doc.addPage();
+      y = 15;
+    } else {
+      y += 4;
+    }
+
+    doc.setFillColor(primaryBlue[0], primaryBlue[1], primaryBlue[2]);
+    doc.rect(10, y, 190, 7, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9.5);
+    doc.text('7. REGISTRO FOTOGRÁFICO', 14, y + 5);
+
+    y += 12;
+
+    // Render photos 2 per row
+    const photoWidth = 55;
+    const photoHeight = 45;
+
+    for (let i = 0; i < report.registroFotografico.length; i += 2) {
+      if (y + photoHeight + 10 > 280) {
+        doc.addPage();
+        y = 15;
+      }
+
+      const p1 = report.registroFotografico[i];
+      const p2 = report.registroFotografico[i + 1];
+
+      // Photo 1
+      if (p1 && p1.url) {
+        try {
+          doc.addImage(p1.url, 'JPEG', 15, y, photoWidth, photoHeight);
+        } catch (e) {
+          doc.rect(15, y, photoWidth, photoHeight);
+          doc.text('Imagen', 25, y + 20);
+        }
+        doc.setFontSize(8);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(darkGray[0], darkGray[1], darkGray[2]);
+        const comment1 = doc.splitTextToSize(p1.comentario || 'Sin comentario', photoWidth + 25);
+        doc.text(comment1, 73, y + 6);
+      }
+
+      // Photo 2
+      if (p2 && p2.url) {
+        const x2 = 110;
+        try {
+          doc.addImage(p2.url, 'JPEG', x2, y, photoWidth, photoHeight);
+        } catch (e) {
+          doc.rect(x2, y, photoWidth, photoHeight);
+          doc.text('Imagen', x2 + 10, y + 20);
+        }
+        doc.setFontSize(8);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(darkGray[0], darkGray[1], darkGray[2]);
+        const comment2 = doc.splitTextToSize(p2.comentario || 'Sin comentario', 32);
+        doc.text(comment2, x2 + photoWidth + 2, y + 6);
+      }
+
+      y += photoHeight + 8;
+    }
+  }
+
+  // 8. CONFORMIDAD Y FIRMAS (3 Signatures)
+  if (y > 225) {
     doc.addPage();
-    y = 20;
+    y = 15;
+  } else {
+    y += 4;
   }
 
   doc.setFillColor(primaryBlue[0], primaryBlue[1], primaryBlue[2]);
   doc.rect(10, y, 190, 7, 'F');
   doc.setTextColor(255, 255, 255);
   doc.setFont('helvetica', 'bold');
-  doc.text('6. CONFORMIDAD Y FIRMAS', 14, y + 5);
+  doc.setFontSize(9.5);
+  doc.text('8. CONFORMIDAD Y FIRMAS', 14, y + 5);
 
-  y += 15;
+  y += 12;
 
-  // Tech Signature Box
+  const sigBoxWidth = 57;
+  const sigBoxHeight = 28;
+
+  // Signature 1: Técnico
   doc.setDrawColor(180, 180, 180);
-  doc.rect(15, y, 80, 30);
-  if (report.firmas.firmaTecnico) {
+  doc.rect(12, y, sigBoxWidth, sigBoxHeight);
+  if (report.firmas?.firmaTecnico) {
     try {
-      doc.addImage(report.firmas.firmaTecnico, 'PNG', 20, y + 2, 70, 20);
+      doc.addImage(report.firmas.firmaTecnico, 'PNG', 14, y + 2, sigBoxWidth - 4, sigBoxHeight - 4);
     } catch (e) {
       // ignore
     }
   }
-  doc.setFontSize(8);
+  doc.setFontSize(7.5);
   doc.setTextColor(80, 80, 80);
-  doc.text(`Técnico Responsable: ${report.firmas.aclaracionTecnico || '-'}`, 15, y + 35);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Técnico Responsable:', 12, y + sigBoxHeight + 4);
+  doc.setFont('helvetica', 'normal');
+  doc.text(report.firmas?.aclaracionTecnico || '-', 12, y + sigBoxHeight + 8);
 
-  // Client Signature Box
-  doc.rect(110, y, 80, 30);
-  if (report.firmas.firmaCliente) {
+  // Signature 2: Cliente
+  const xClient = 76;
+  doc.rect(xClient, y, sigBoxWidth, sigBoxHeight);
+  if (report.firmas?.firmaCliente) {
     try {
-      doc.addImage(report.firmas.firmaCliente, 'PNG', 115, y + 2, 70, 20);
+      doc.addImage(report.firmas.firmaCliente, 'PNG', xClient + 2, y + 2, sigBoxWidth - 4, sigBoxHeight - 4);
     } catch (e) {
       // ignore
     }
   }
-  doc.text(`Por el Cliente: ${report.firmas.aclaracionCliente || '-'}`, 110, y + 35);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Por el Cliente:', xClient, y + sigBoxHeight + 4);
+  doc.setFont('helvetica', 'normal');
+  doc.text(report.firmas?.aclaracionCliente || '-', xClient, y + sigBoxHeight + 8);
 
-  doc.save(`Formulario_${report.numeroServicio}_${report.cliente.substring(0, 15)}.pdf`);
+  // Signature 3: Supervisor
+  const xSupervisor = 140;
+  doc.rect(xSupervisor, y, sigBoxWidth, sigBoxHeight);
+  if (report.firmas?.firmaSupervisor) {
+    try {
+      doc.addImage(report.firmas.firmaSupervisor, 'PNG', xSupervisor + 2, y + 2, sigBoxWidth - 4, sigBoxHeight - 4);
+    } catch (e) {
+      // ignore
+    }
+  }
+  doc.setFont('helvetica', 'bold');
+  doc.text('Supervisor:', xSupervisor, y + sigBoxHeight + 4);
+  doc.setFont('helvetica', 'normal');
+  doc.text(report.firmas?.aclaracionSupervisor || '-', xSupervisor, y + sigBoxHeight + 8);
+
+  // Print Window Trigger + File Download
+  try {
+    const pdfBlob = doc.output('blob');
+    const blobUrl = URL.createObjectURL(pdfBlob);
+    const printWindow = window.open(blobUrl, '_blank');
+    if (printWindow) {
+      printWindow.focus();
+    }
+  } catch (e) {
+    console.warn('Unable to open print preview tab:', e);
+  }
+
+  doc.save(`Formulario_${report.numeroServicio}_${(report.cliente || 'Servicio').substring(0, 15).replace(/\s+/g, '_')}.pdf`);
 }
