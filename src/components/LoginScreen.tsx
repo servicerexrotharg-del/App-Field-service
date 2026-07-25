@@ -43,7 +43,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
             muted
             playsInline
             controls={false}
-            className="absolute inset-0 w-full h-full object-cover rounded-xl z-10"
+            className="absolute inset-0 w-full h-full object-cover scale-[1.18] rounded-xl z-10"
             onCanPlay={(e) => {
               (e.target as HTMLElement).style.opacity = '1';
             }}
