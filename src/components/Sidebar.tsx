@@ -102,8 +102,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentTab, onTabChange, repor
             <span className="text-cyan-400 font-mono">v2.4.0</span>
           </div>
           <div className="text-[11px] font-bold text-slate-200">Usuario: fservice</div>
-          <p className="text-[9px] text-slate-500">
-            Field Service Technical Assistant System • Bosch Rexroth Argentina
+          <p className="text-[9px] text-slate-400 font-medium">
+            Sistema web desarrollado por Walter Pereyra SVC 2026
           </p>
         </div>
       </div>

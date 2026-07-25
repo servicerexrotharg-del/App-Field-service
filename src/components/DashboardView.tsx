@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   ResponsiveContainer,
   LineChart,
@@ -16,7 +16,7 @@ import {
 } from 'recharts';
 import { FieldServiceReport } from '../types';
 import { calculateReportHourBreakdown } from '../lib/hoursCalculator';
-import { Clock, FileCheck, Users, ShieldCheck, TrendingUp } from 'lucide-react';
+import { Clock, FileCheck, Users, ShieldCheck, TrendingUp, Filter } from 'lucide-react';
 
 interface DashboardViewProps {
   reports: FieldServiceReport[];
@@ -25,7 +25,18 @@ interface DashboardViewProps {
 const COLORS_PIE = ['#06b6d4', '#ec4899', '#f59e0b', '#3b82f6', '#10b981', '#8b5cf6'];
 
 export const DashboardView: React.FC<DashboardViewProps> = ({ reports }) => {
-  // Aggregate data for Line Chart (Services per Month)
+  const [selectedClient, setSelectedClient] = useState<string>('TODOS');
+
+  // Unique list of clients sorted alphabetically
+  const clientList = Array.from(new Set(reports.map((r) => r.cliente).filter(Boolean))).sort();
+
+  // Filter reports by selected client
+  const filteredReports =
+    selectedClient === 'TODOS'
+      ? reports
+      : reports.filter((r) => r.cliente === selectedClient);
+
+  // Aggregate data for Line Chart & Bar Chart based on filtered reports
   const monthlyServicesMap: { [key: string]: number } = {};
   const monthlyHoursMap: { [key: string]: number } = {};
   const categoryMap: { [key: string]: number } = {};
@@ -34,7 +45,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ reports }) => {
   let totalWorkedHours = 0;
   let totalTravelHours = 0;
 
-  reports.forEach((r) => {
+  filteredReports.forEach((r) => {
     const monthKey = r.fecha ? r.fecha.substring(0, 7) : '2026-07';
     monthlyServicesMap[monthKey] = (monthlyServicesMap[monthKey] || 0) + 1;
 
@@ -77,6 +88,42 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ reports }) => {
 
   return (
     <div className="p-4 sm:p-6 space-y-6">
+      {/* Client Filter Bar */}
+      <div className="flex flex-wrap items-center justify-between gap-4 bg-slate-900/90 border border-slate-800 rounded-xl p-4 shadow-sm">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-lg bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400">
+            <Filter className="w-4 h-4" />
+          </div>
+          <div>
+            <h2 className="text-sm font-bold text-slate-100">Filtrar Análisis por Cliente</h2>
+            <p className="text-[11px] text-slate-400">
+              {selectedClient === 'TODOS'
+                ? `Mostrando estadísticas globales de todos los clientes (${reports.length} reportes)`
+                : `Filtrando datos exclusivamente para: ${selectedClient}`}
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2.5 w-full sm:w-auto">
+          <label className="text-xs font-bold text-slate-300 whitespace-nowrap flex items-center gap-1.5">
+            <Users className="w-3.5 h-3.5 text-cyan-400" />
+            <span>Cliente:</span>
+          </label>
+          <select
+            value={selectedClient}
+            onChange={(e) => setSelectedClient(e.target.value)}
+            className="w-full sm:w-72 bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-cyan-500 font-medium cursor-pointer"
+          >
+            <option value="TODOS">-- Todos los clientes ({reports.length} reportes) --</option>
+            {clientList.map((client) => (
+              <option key={client} value={client}>
+                {client}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
       {/* KPI Cards Header */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-4 flex items-center gap-3">
@@ -85,7 +132,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ reports }) => {
           </div>
           <div>
             <p className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Total Servicios</p>
-            <h3 className="text-xl font-bold text-slate-100">{reports.length}</h3>
+            <h3 className="text-xl font-bold text-slate-100">{filteredReports.length}</h3>
           </div>
         </div>
 

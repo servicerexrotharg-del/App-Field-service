@@ -135,9 +135,9 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
         </form>
 
         <div className="pt-2 border-t border-slate-800/80 text-center">
-          <p className="text-[10px] text-slate-500 flex items-center justify-center gap-1">
+          <p className="text-[10px] text-slate-400 flex items-center justify-center gap-1 font-medium">
             <Shield className="w-3 h-3 text-cyan-500" />
-            <span>Bosch Rexroth Field Service System • Formulario FR82155-4</span>
+            <span>Sistema web desarrollado por Walter Pereyra SVC 2026</span>
           </p>
         </div>
       </div>

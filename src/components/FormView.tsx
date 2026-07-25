@@ -683,71 +683,98 @@ export const FormView: React.FC<FormViewProps> = ({
           </div>
 
           {/* Detailed Hours Breakdown Summary */}
-          <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-3">
-            <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
-              <Clock className="w-3.5 h-3.5 text-cyan-400" />
-              Detalle de Horas Insumidas por Legislación Laboral
-            </h4>
+          {(() => {
+            const totalEspecialista = Math.round((hourBreakdown.especialista.viaje + hourBreakdown.especialista.normales + hourBreakdown.especialista.extras50 + hourBreakdown.especialista.extras100) * 100) / 100;
+            const totalTecnico = Math.round((hourBreakdown.tecnico.viaje + hourBreakdown.tecnico.normales + hourBreakdown.tecnico.extras50 + hourBreakdown.tecnico.extras100) * 100) / 100;
+            const totalAyudante = Math.round((hourBreakdown.ayudante.viaje + hourBreakdown.ayudante.normales + hourBreakdown.ayudante.extras50 + hourBreakdown.ayudante.extras100) * 100) / 100;
+            const totalHorasTrabajoGeneral = Math.round((hourBreakdown.totalViaje + totalEspecialista + totalTecnico + totalAyudante) * 100) / 100;
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              {/* Especialistas */}
-              <div className="bg-slate-900 border border-slate-800 rounded-lg p-3 space-y-1">
-                <span className="text-[11px] font-bold text-cyan-400 uppercase">Especialista</span>
-                <div className="text-[10px] space-y-0.5 text-slate-300">
-                  <p>H. Viaje: {hourBreakdown.especialista.viaje} hs</p>
-                  <p>Normales (7-18 hs): <span className="font-bold text-cyan-300">{hourBreakdown.especialista.normales} hs</span></p>
-                  <p>Extras 50% (18-21 hs): <span className="font-bold text-pink-400">{hourBreakdown.especialista.extras50} hs</span></p>
-                  <p>Extras 100% (21-6 / Feriado): <span className="font-bold text-amber-400">{hourBreakdown.especialista.extras100} hs</span></p>
+            return (
+              <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-3">
+                <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+                  <Clock className="w-3.5 h-3.5 text-cyan-400" />
+                  Detalle de Horas Insumidas por Legislación Laboral
+                </h4>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  {/* Especialistas */}
+                  <div className="bg-slate-900 border border-slate-800 rounded-lg p-3 space-y-1 flex flex-col justify-between">
+                    <div>
+                      <span className="text-[11px] font-bold text-cyan-400 uppercase">Especialista</span>
+                      <div className="text-[10px] space-y-0.5 text-slate-300 mt-1">
+                        <p>H. Viaje: {hourBreakdown.especialista.viaje} hs</p>
+                        <p>Normales (7-18 hs): <span className="font-bold text-cyan-300">{hourBreakdown.especialista.normales} hs</span></p>
+                        <p>Extras 50% (18-21 hs): <span className="font-bold text-pink-400">{hourBreakdown.especialista.extras50} hs</span></p>
+                        <p>Extras 100% (21-6 / Feriado): <span className="font-bold text-amber-400">{hourBreakdown.especialista.extras100} hs</span></p>
+                      </div>
+                      {hourBreakdown.especialista.cantidadTecnicos > 1 && (
+                        <p className="text-[9px] text-cyan-500 italic mt-1 border-t border-slate-800 pt-1">
+                          * Corresponde a la sumatoria de {hourBreakdown.especialista.cantidadTecnicos} técnicos especialistas.
+                        </p>
+                      )}
+                    </div>
+                    <div className="pt-2 mt-2 border-t border-slate-800 flex justify-between items-center text-[10px] font-bold text-cyan-300">
+                      <span>Suma Especialista:</span>
+                      <span className="text-xs font-mono">{totalEspecialista} hs</span>
+                    </div>
+                  </div>
+
+                  {/* Técnicos */}
+                  <div className="bg-slate-900 border border-slate-800 rounded-lg p-3 space-y-1 flex flex-col justify-between">
+                    <div>
+                      <span className="text-[11px] font-bold text-emerald-400 uppercase">Técnico</span>
+                      <div className="text-[10px] space-y-0.5 text-slate-300 mt-1">
+                        <p>H. Viaje: {hourBreakdown.tecnico.viaje} hs</p>
+                        <p>Normales (7-18 hs): <span className="font-bold text-emerald-300">{hourBreakdown.tecnico.normales} hs</span></p>
+                        <p>Extras 50% (18-21 hs): <span className="font-bold text-pink-400">{hourBreakdown.tecnico.extras50} hs</span></p>
+                        <p>Extras 100% (21-6 / Feriado): <span className="font-bold text-amber-400">{hourBreakdown.tecnico.extras100} hs</span></p>
+                      </div>
+                      {hourBreakdown.tecnico.cantidadTecnicos > 1 && (
+                        <p className="text-[9px] text-emerald-500 italic mt-1 border-t border-slate-800 pt-1">
+                          * Corresponde a la sumatoria de {hourBreakdown.tecnico.cantidadTecnicos} técnicos.
+                        </p>
+                      )}
+                    </div>
+                    <div className="pt-2 mt-2 border-t border-slate-800 flex justify-between items-center text-[10px] font-bold text-emerald-300">
+                      <span>Suma Técnico:</span>
+                      <span className="text-xs font-mono">{totalTecnico} hs</span>
+                    </div>
+                  </div>
+
+                  {/* Ayudantes */}
+                  <div className="bg-slate-900 border border-slate-800 rounded-lg p-3 space-y-1 flex flex-col justify-between">
+                    <div>
+                      <span className="text-[11px] font-bold text-purple-400 uppercase">Ayudante</span>
+                      <div className="text-[10px] space-y-0.5 text-slate-300 mt-1">
+                        <p>H. Viaje: {hourBreakdown.ayudante.viaje} hs</p>
+                        <p>Normales (7-18 hs): <span className="font-bold text-purple-300">{hourBreakdown.ayudante.normales} hs</span></p>
+                        <p>Extras 50%: <span className="font-bold text-pink-400">{hourBreakdown.ayudante.extras50} hs</span></p>
+                        <p>Extras 100%: <span className="font-bold text-amber-400">{hourBreakdown.ayudante.extras100} hs</span></p>
+                      </div>
+                      {hourBreakdown.ayudante.cantidadTecnicos > 1 && (
+                        <p className="text-[9px] text-purple-500 italic mt-1 border-t border-slate-800 pt-1">
+                          * Corresponde a la sumatoria de {hourBreakdown.ayudante.cantidadTecnicos} ayudantes.
+                        </p>
+                      )}
+                    </div>
+                    <div className="pt-2 mt-2 border-t border-slate-800 flex justify-between items-center text-[10px] font-bold text-purple-300">
+                      <span>Suma Ayudante:</span>
+                      <span className="text-xs font-mono">{totalAyudante} hs</span>
+                    </div>
+                  </div>
                 </div>
-                {hourBreakdown.especialista.cantidadTecnicos > 1 && (
-                  <p className="text-[9px] text-cyan-500 italic mt-1 border-t border-slate-800 pt-1">
-                    * Corresponde a la sumatoria de {hourBreakdown.especialista.cantidadTecnicos} técnicos especialistas.
-                  </p>
-                )}
-              </div>
 
-              {/* Técnicos */}
-              <div className="bg-slate-900 border border-slate-800 rounded-lg p-3 space-y-1">
-                <span className="text-[11px] font-bold text-emerald-400 uppercase">Técnico</span>
-                <div className="text-[10px] space-y-0.5 text-slate-300">
-                  <p>H. Viaje: {hourBreakdown.tecnico.viaje} hs</p>
-                  <p>Normales (7-18 hs): <span className="font-bold text-emerald-300">{hourBreakdown.tecnico.normales} hs</span></p>
-                  <p>Extras 50% (18-21 hs): <span className="font-bold text-pink-400">{hourBreakdown.tecnico.extras50} hs</span></p>
-                  <p>Extras 100% (21-6 / Feriado): <span className="font-bold text-amber-400">{hourBreakdown.tecnico.extras100} hs</span></p>
+                <div className="flex flex-wrap justify-between items-center pt-2 border-t border-slate-800 text-xs font-bold">
+                  <span className="text-slate-400">
+                    Total Horas Viaje: <span className="text-slate-100">{hourBreakdown.totalViaje} hs</span>
+                  </span>
+                  <span className="text-cyan-400">
+                    Total Horas Trabajo: <span className="text-white text-sm font-extrabold">{totalHorasTrabajoGeneral} hs</span>
+                  </span>
                 </div>
-                {hourBreakdown.tecnico.cantidadTecnicos > 1 && (
-                  <p className="text-[9px] text-emerald-500 italic mt-1 border-t border-slate-800 pt-1">
-                    * Corresponde a la sumatoria de {hourBreakdown.tecnico.cantidadTecnicos} técnicos.
-                  </p>
-                )}
               </div>
-
-              {/* Ayudantes */}
-              <div className="bg-slate-900 border border-slate-800 rounded-lg p-3 space-y-1">
-                <span className="text-[11px] font-bold text-purple-400 uppercase">Ayudante</span>
-                <div className="text-[10px] space-y-0.5 text-slate-300">
-                  <p>H. Viaje: {hourBreakdown.ayudante.viaje} hs</p>
-                  <p>Normales (7-18 hs): <span className="font-bold text-purple-300">{hourBreakdown.ayudante.normales} hs</span></p>
-                  <p>Extras 50%: <span className="font-bold text-pink-400">{hourBreakdown.ayudante.extras50} hs</span></p>
-                  <p>Extras 100%: <span className="font-bold text-amber-400">{hourBreakdown.ayudante.extras100} hs</span></p>
-                </div>
-                {hourBreakdown.ayudante.cantidadTecnicos > 1 && (
-                  <p className="text-[9px] text-purple-500 italic mt-1 border-t border-slate-800 pt-1">
-                    * Corresponde a la sumatoria de {hourBreakdown.ayudante.cantidadTecnicos} ayudantes.
-                  </p>
-                )}
-              </div>
-            </div>
-
-            <div className="flex flex-wrap justify-between items-center pt-2 border-t border-slate-800 text-xs font-bold">
-              <span className="text-slate-400">
-                Total Horas Viaje: <span className="text-slate-100">{hourBreakdown.totalViaje} hs</span>
-              </span>
-              <span className="text-cyan-400">
-                Total Horas Trabajo: <span className="text-white text-sm">{hourBreakdown.totalTrabajo} hs</span>
-              </span>
-            </div>
-          </div>
+            );
+          })()}
         </section>
 
         {/* 5. TAREAS REALIZADAS (VOICE DICTATION) */}
