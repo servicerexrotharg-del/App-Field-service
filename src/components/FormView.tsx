@@ -17,6 +17,7 @@ import { VoiceInputButton } from './VoiceInputButton';
 import { SignatureCanvas } from './SignatureCanvas';
 import { calculateReportHourBreakdown, formatHoursLabel } from '../lib/hoursCalculator';
 import { generatePDFFromElement, generateCleanPDFReport } from '../lib/pdfGenerator';
+import { getPendingSyncCount } from '../lib/supabase';
 import {
   Save,
   Printer,
@@ -177,6 +178,45 @@ export const FormView: React.FC<FormViewProps> = ({
   };
 
   // Photo handlers (Max 6)
+  // Comprime la foto antes de guardarla: redimensiona a un máximo de 1280px
+  // y recodifica en JPEG calidad 0.72. Una foto de celular de 4-6 MB queda en
+  // ~150-300 KB sin pérdida visible en pantalla ni en el PDF. Si algo falla,
+  // se usa la imagen original como respaldo.
+  const compressImage = (file: File, maxDim = 1280, quality = 0.72): Promise<string> =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const originalUrl = ev.target?.result as string;
+        const img = new Image();
+        img.onload = () => {
+          try {
+            let { width, height } = img;
+            if (width > maxDim || height > maxDim) {
+              const scale = Math.min(maxDim / width, maxDim / height);
+              width = Math.round(width * scale);
+              height = Math.round(height * scale);
+            }
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            if (!ctx) {
+              resolve(originalUrl);
+              return;
+            }
+            ctx.drawImage(img, 0, 0, width, height);
+            resolve(canvas.toDataURL('image/jpeg', quality));
+          } catch {
+            resolve(originalUrl);
+          }
+        };
+        img.onerror = () => resolve(originalUrl);
+        img.src = originalUrl;
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files) return;
@@ -189,18 +229,18 @@ export const FormView: React.FC<FormViewProps> = ({
     const availableSlots = 6 - photos.length;
     const fileList = (Array.from(files) as File[]).slice(0, availableSlots);
 
-    fileList.forEach((file: File) => {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const url = event.target?.result as string;
+    fileList.forEach(async (file: File) => {
+      try {
+        const url = await compressImage(file);
         if (url) {
-          setPhotos((prev) => [
-            ...prev,
-            { id: 'photo-' + Date.now() + Math.random(), url, comentario: '' },
-          ]);
+          setPhotos((prev) => {
+            if (prev.length >= 6) return prev;
+            return [...prev, { id: 'photo-' + Date.now() + Math.random(), url, comentario: '' }];
+          });
         }
-      };
-      reader.readAsDataURL(file);
+      } catch (err) {
+        console.error('Error procesando la foto:', err);
+      }
     });
   };
 
@@ -256,7 +296,12 @@ export const FormView: React.FC<FormViewProps> = ({
 
     try {
       await onSaveReport(reportToSave);
-      setSaveStatus('Formulario guardado con éxito.');
+      const pendientes = getPendingSyncCount();
+      setSaveStatus(
+        pendientes > 0
+          ? 'Formulario guardado en el dispositivo. Se subirá a Supabase automáticamente al recuperar conexión.'
+          : 'Formulario guardado con éxito.'
+      );
 
       // Generate & print PDF
       generateCleanPDFReport(reportToSave);
@@ -792,10 +837,7 @@ export const FormView: React.FC<FormViewProps> = ({
                   </div>
                 </div>
 
-                <div className="flex flex-wrap justify-between items-center pt-2 border-t border-slate-800 text-xs font-bold">
-                  <span className="text-slate-400">
-                    Total Horas Viaje: <span className="text-slate-100">{hourBreakdown.totalViaje} hs</span>
-                  </span>
+                <div className="flex flex-wrap justify-end items-center pt-2 border-t border-slate-800 text-xs font-bold">
                   <span className="text-cyan-400">
                     Total Horas Trabajo: <span className="text-white text-sm font-extrabold">{totalHorasTrabajoGeneral} hs</span>
                   </span>

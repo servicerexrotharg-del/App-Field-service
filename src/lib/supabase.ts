@@ -653,6 +653,110 @@ export function getSupabaseConfig(): { url: string; key: string } {
   };
 }
 
+// ====================================================================
+// COLA DE SINCRONIZACIÓN (OUTBOX)
+// Los reportes guardados sin conexión quedan marcados como pendientes y
+// se suben automáticamente a Supabase cuando el dispositivo recupera señal
+// (ver el listener del evento 'online' en App.tsx).
+// ====================================================================
+const PENDING_SYNC_KEY = 'rexroth_fs_pending_sync_reports';
+const PENDING_DELETE_KEY = 'rexroth_fs_pending_delete_reports';
+
+function getPendingSet(key: string): string[] {
+  try {
+    return JSON.parse(localStorage.getItem(key) || '[]');
+  } catch {
+    return [];
+  }
+}
+
+function savePendingSet(key: string, ids: string[]): void {
+  localStorage.setItem(key, JSON.stringify(Array.from(new Set(ids))));
+}
+
+function addPending(key: string, id: string): void {
+  savePendingSet(key, [...getPendingSet(key), id]);
+}
+
+function removePending(key: string, id: string): void {
+  savePendingSet(key, getPendingSet(key).filter((x) => x !== id));
+}
+
+/** Cantidad de operaciones (altas/ediciones + eliminaciones) esperando subir a Supabase. */
+export function getPendingSyncCount(): number {
+  return getPendingSet(PENDING_SYNC_KEY).length + getPendingSet(PENDING_DELETE_KEY).length;
+}
+
+/** Sube un reporte a Supabase; lanza Error si la base devuelve { error }. */
+async function upsertReportToSupabase(client: SupabaseClient, r: FieldServiceReport): Promise<void> {
+  const { error } = await client.from('field_service_reports').upsert({
+    id: r.id,
+    numero_formulario: r.numeroFormulario,
+    numero_servicio: r.numeroServicio,
+    fecha: r.fecha,
+    cliente: r.cliente,
+    direccion: r.direccion,
+    tipo_servicio: r.tipoServicio,
+    categoria: r.categoria,
+    numero_orden_compra: r.numeroOrdenCompra,
+    numero_contrato: r.numeroContrato,
+    numero_orden_trabajo: r.numeroOrdenTrabajo,
+    detalle_problema: r.detalleProblema,
+    tecnicos_insumidos: r.tecnicosInsumidos,
+    dias_horas_consumidas: r.diasHorasConsumidas,
+    tareas_realizadas: r.tareasRealizadas,
+    recomendacion_conclusion: r.recomendacionConclusion,
+    instrumentos_utilizados: r.instrumentosUtilizados,
+    materiales_utilizados: r.materialesUtilizados,
+    registro_fotografico: r.registroFotografico,
+    firmas: r.firmas,
+    updated_at: r.updatedAt,
+  });
+  if (error) throw new Error(error.message);
+}
+
+/**
+ * Procesa la cola: intenta subir todos los reportes pendientes y ejecutar
+ * las eliminaciones pendientes. Se llama al iniciar la app y cada vez que
+ * el navegador dispara el evento 'online'.
+ */
+export async function syncPendingReports(): Promise<{ synced: number; pending: number }> {
+  const client = getSupabaseClient();
+  if (!client) return { synced: 0, pending: getPendingSyncCount() };
+
+  let synced = 0;
+  const local = localStorage.getItem(STORAGE_KEYS.REPORTS);
+  const reports: FieldServiceReport[] = local ? JSON.parse(local) : [];
+
+  for (const id of getPendingSet(PENDING_SYNC_KEY)) {
+    const rep = reports.find((r) => r.id === id);
+    if (!rep) {
+      removePending(PENDING_SYNC_KEY, id);
+      continue;
+    }
+    try {
+      await upsertReportToSupabase(client, rep);
+      removePending(PENDING_SYNC_KEY, id);
+      synced++;
+    } catch (err) {
+      console.warn('Reintento de sincronización fallido para', id, err);
+    }
+  }
+
+  for (const id of getPendingSet(PENDING_DELETE_KEY)) {
+    try {
+      const { error } = await client.from('field_service_reports').delete().eq('id', id);
+      if (error) throw new Error(error.message);
+      removePending(PENDING_DELETE_KEY, id);
+      synced++;
+    } catch (err) {
+      console.warn('Reintento de eliminación fallido para', id, err);
+    }
+  }
+
+  return { synced, pending: getPendingSyncCount() };
+}
+
 // Data Store Layer (Reads/Writes to localStorage with async Supabase sync)
 export async function getReports(): Promise<FieldServiceReport[]> {
   const local = localStorage.getItem(STORAGE_KEYS.REPORTS);
@@ -663,7 +767,7 @@ export async function getReports(): Promise<FieldServiceReport[]> {
     try {
       const { data, error } = await client.from('field_service_reports').select('*').order('created_at', { ascending: false });
       if (!error && data && data.length > 0) {
-        reports = data.map((item) => ({
+        const serverReports: FieldServiceReport[] = data.map((item) => ({
           id: item.id,
           numeroFormulario: item.numero_formulario || 'FR82155-4',
           numeroServicio: item.numero_servicio,
@@ -687,6 +791,18 @@ export async function getReports(): Promise<FieldServiceReport[]> {
           createdAt: item.created_at,
           updatedAt: item.updated_at,
         }));
+
+        // CRÍTICO: los reportes locales pendientes de subir NUNCA se pisan
+        // con los datos del servidor; se preservan hasta confirmar la subida.
+        const pendingIds = getPendingSet(PENDING_SYNC_KEY);
+        const pendingDeleteIds = getPendingSet(PENDING_DELETE_KEY);
+        const localPending = reports.filter((r) => pendingIds.includes(r.id));
+        reports = [
+          ...localPending,
+          ...serverReports.filter(
+            (sr) => !pendingIds.includes(sr.id) && !pendingDeleteIds.includes(sr.id)
+          ),
+        ];
         localStorage.setItem(STORAGE_KEYS.REPORTS, JSON.stringify(reports));
       }
     } catch (err) {
@@ -719,32 +835,16 @@ export async function saveReport(report: FieldServiceReport): Promise<FieldServi
   const client = getSupabaseClient();
   if (client) {
     try {
-      await client.from('field_service_reports').upsert({
-        id: updatedReport.id,
-        numero_formulario: updatedReport.numeroFormulario,
-        numero_servicio: updatedReport.numeroServicio,
-        fecha: updatedReport.fecha,
-        cliente: updatedReport.cliente,
-        direccion: updatedReport.direccion,
-        tipo_servicio: updatedReport.tipoServicio,
-        categoria: updatedReport.categoria,
-        numero_orden_compra: updatedReport.numeroOrdenCompra,
-        numero_contrato: updatedReport.numeroContrato,
-        numero_orden_trabajo: updatedReport.numeroOrdenTrabajo,
-        detalle_problema: updatedReport.detalleProblema,
-        tecnicos_insumidos: updatedReport.tecnicosInsumidos,
-        dias_horas_consumidas: updatedReport.diasHorasConsumidas,
-        tareas_realizadas: updatedReport.tareasRealizadas,
-        recomendacion_conclusion: updatedReport.recomendacionConclusion,
-        instrumentos_utilizados: updatedReport.instrumentosUtilizados,
-        materiales_utilizados: updatedReport.materialesUtilizados,
-        registro_fotografico: updatedReport.registroFotografico,
-        firmas: updatedReport.firmas,
-        updated_at: now,
-      });
+      await upsertReportToSupabase(client, updatedReport);
+      removePending(PENDING_SYNC_KEY, updatedReport.id);
     } catch (err) {
-      console.warn('Supabase save failed:', err);
+      // Sin conexión (o error de Supabase): el reporte queda en la cola y se
+      // subirá automáticamente cuando el dispositivo recupere señal.
+      console.warn('Reporte en cola de sincronización:', err);
+      addPending(PENDING_SYNC_KEY, updatedReport.id);
     }
+  } else {
+    addPending(PENDING_SYNC_KEY, updatedReport.id);
   }
 
   return updatedReport;
@@ -755,13 +855,22 @@ export async function deleteReport(id: string): Promise<void> {
   const filtered = reports.filter((r) => r.id !== id);
   localStorage.setItem(STORAGE_KEYS.REPORTS, JSON.stringify(filtered));
 
+  // Si estaba pendiente de subir, ya no hace falta subirlo.
+  removePending(PENDING_SYNC_KEY, id);
+
   const client = getSupabaseClient();
   if (client) {
     try {
-      await client.from('field_service_reports').delete().eq('id', id);
+      const { error } = await client.from('field_service_reports').delete().eq('id', id);
+      if (error) throw new Error(error.message);
+      removePending(PENDING_DELETE_KEY, id);
     } catch (err) {
-      console.warn('Supabase delete failed:', err);
+      // Sin conexión: la eliminación queda encolada para cuando vuelva la señal.
+      console.warn('Eliminación en cola de sincronización:', err);
+      addPending(PENDING_DELETE_KEY, id);
     }
+  } else {
+    addPending(PENDING_DELETE_KEY, id);
   }
 }
 
@@ -782,9 +891,11 @@ export async function resetClientsToOfficialList(): Promise<Client[]> {
         nombre: c.nombre,
         direccion: c.direccion,
       }));
-      await client.from('clients').upsert(payload, { onConflict: 'id' });
-    } catch (err) {
-      console.warn('Supabase reset clients error:', err);
+      const { error } = await client.from('clients').upsert(payload, { onConflict: 'id' });
+      if (error) throw new Error(error.message);
+    } catch (err: any) {
+      console.error('Supabase reset clients error:', err);
+      alert('Atención: la lista oficial no pudo subirse a Supabase (' + (err?.message || 'error de conexión') + ').');
     }
   }
   return INITIAL_CLIENTS;
@@ -864,14 +975,16 @@ export async function saveClient(clientData: Client): Promise<Client[]> {
   const client = getSupabaseClient();
   if (client) {
     try {
-      await client.from('clients').upsert({
+      const { error } = await client.from('clients').upsert({
         id: clientData.id,
         identificacion: clientData.identificacion,
         nombre: clientData.nombre,
         direccion: clientData.direccion,
       });
-    } catch (err) {
-      console.warn('Supabase client save error:', err);
+      if (error) throw new Error(error.message);
+    } catch (err: any) {
+      console.error('Supabase client save error:', err);
+      alert('Atención: el cliente no pudo guardarse en Supabase (' + (err?.message || 'error de conexión') + ').');
     }
   }
 
@@ -886,9 +999,11 @@ export async function deleteClient(id: string): Promise<Client[]> {
   const client = getSupabaseClient();
   if (client) {
     try {
-      await client.from('clients').delete().eq('id', id);
-    } catch (err) {
-      console.warn('Supabase client delete error:', err);
+      const { error } = await client.from('clients').delete().eq('id', id);
+      if (error) throw new Error(error.message);
+    } catch (err: any) {
+      console.error('Supabase client delete error:', err);
+      alert('Atención: el cliente no pudo eliminarse de Supabase (' + (err?.message || 'error de conexión') + ').');
     }
   }
 

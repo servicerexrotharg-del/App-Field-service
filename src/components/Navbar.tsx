@@ -9,6 +9,7 @@ interface NavbarProps {
   onLogout: () => void;
   onExportExcel: () => void;
   hasSupabase: boolean;
+  pendingSyncCount?: number;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -17,6 +18,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onLogout,
   onExportExcel,
   hasSupabase,
+  pendingSyncCount = 0,
 }) => {
   return (
     <header className="bg-slate-900 border-b border-slate-800 px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-4 sticky top-0 z-30 shadow-md">
@@ -50,6 +52,18 @@ export const Navbar: React.FC<NavbarProps> = ({
           </span>
           <span className={`w-2 h-2 rounded-full ${hasSupabase ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`}></span>
         </div>
+
+        {/* Indicador de cola de sincronización: reportes guardados en el
+            dispositivo esperando conexión para subirse a Supabase */}
+        {pendingSyncCount > 0 && (
+          <div
+            title="Reportes guardados en el dispositivo. Se subirán a Supabase automáticamente al recuperar conexión."
+            className="flex items-center gap-1.5 px-2.5 py-1 bg-amber-950/60 border border-amber-700/60 rounded-full text-[11px] text-amber-300 font-medium"
+          >
+            <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+            <span>{pendingSyncCount} pendiente{pendingSyncCount > 1 ? 's' : ''} de subir</span>
+          </div>
+        )}
 
         {/* Quick Action: New Form */}
         <button
