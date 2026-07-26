@@ -135,7 +135,29 @@ export interface FieldServiceReport {
 
 export type ViewTab =
   | 'dashboard'
+  | 'calendario'
   | 'nuevo_formulario'
   | 'listado_formularios'
   | 'clientes'
   | 'configuracion';
+
+// ===== Calendario de Servicios =====
+export type ServiceStatus = 'Programado' | 'Confirmado' | 'Completado' | 'Cancelado';
+
+export interface ScheduledTechnician {
+  id: string;
+  categoria: 'Especialista' | 'Técnico' | 'Ayudante' | string;
+  cantidad: number;
+}
+
+export interface ScheduledService {
+  id: string;
+  fechaInicio: string; // YYYY-MM-DD
+  fechaFin: string;    // YYYY-MM-DD (>= fechaInicio)
+  cliente: string;
+  motivo: string;
+  tecnicos: ScheduledTechnician[];
+  estado: ServiceStatus;
+  createdAt?: string;
+  updatedAt?: string;
+}

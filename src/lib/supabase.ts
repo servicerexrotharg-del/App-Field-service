@@ -6,6 +6,7 @@ import {
   ServiceTypeOption,
   ContractOption,
   TechnicianRoleOption,
+  ScheduledService,
 } from '../types';
 
 const STORAGE_KEYS = {
@@ -1004,6 +1005,109 @@ export async function deleteClient(id: string): Promise<Client[]> {
     } catch (err: any) {
       console.error('Supabase client delete error:', err);
       alert('Atención: el cliente no pudo eliminarse de Supabase (' + (err?.message || 'error de conexión') + ').');
+    }
+  }
+
+  return filtered;
+}
+
+// ====================================================================
+// CALENDARIO DE SERVICIOS (tabla scheduled_services en Supabase)
+// Espejo local + subida inmediata con detección de errores. El agendado
+// se hace normalmente con señal (oficina); si la subida falla, se avisa.
+// ====================================================================
+const SCHEDULED_KEY = 'rexroth_fs_scheduled_v1';
+
+export async function getScheduledServices(): Promise<ScheduledService[]> {
+  let services: ScheduledService[] = [];
+  const local = localStorage.getItem(SCHEDULED_KEY);
+  if (local) {
+    try {
+      services = JSON.parse(local);
+    } catch {
+      services = [];
+    }
+  }
+
+  const client = getSupabaseClient();
+  if (client) {
+    try {
+      const { data, error } = await client
+        .from('scheduled_services')
+        .select('*')
+        .order('fecha_inicio', { ascending: true });
+      if (!error && data) {
+        services = data.map((item: any) => ({
+          id: item.id,
+          fechaInicio: item.fecha_inicio,
+          fechaFin: item.fecha_fin,
+          cliente: item.cliente || '',
+          motivo: item.motivo || '',
+          tecnicos: item.tecnicos || [],
+          estado: item.estado || 'Programado',
+          createdAt: item.created_at,
+          updatedAt: item.updated_at,
+        }));
+        localStorage.setItem(SCHEDULED_KEY, JSON.stringify(services));
+      }
+    } catch (err) {
+      console.warn('Supabase scheduled services fetch error:', err);
+    }
+  }
+
+  return services;
+}
+
+export async function saveScheduledService(service: ScheduledService): Promise<ScheduledService[]> {
+  const services = await getScheduledServices();
+  const now = new Date().toISOString();
+  const updated: ScheduledService = {
+    ...service,
+    updatedAt: now,
+    createdAt: service.createdAt || now,
+  };
+
+  const idx = services.findIndex((s) => s.id === updated.id);
+  if (idx >= 0) services[idx] = updated;
+  else services.push(updated);
+  localStorage.setItem(SCHEDULED_KEY, JSON.stringify(services));
+
+  const client = getSupabaseClient();
+  if (client) {
+    try {
+      const { error } = await client.from('scheduled_services').upsert({
+        id: updated.id,
+        fecha_inicio: updated.fechaInicio,
+        fecha_fin: updated.fechaFin,
+        cliente: updated.cliente,
+        motivo: updated.motivo,
+        tecnicos: updated.tecnicos,
+        estado: updated.estado,
+        updated_at: now,
+      });
+      if (error) throw new Error(error.message);
+    } catch (err: any) {
+      console.error('Supabase scheduled save error:', err);
+      alert('Atención: el servicio agendado no pudo guardarse en Supabase (' + (err?.message || 'error de conexión') + '). Verifique que la tabla scheduled_services exista.');
+    }
+  }
+
+  return services;
+}
+
+export async function deleteScheduledService(id: string): Promise<ScheduledService[]> {
+  const services = await getScheduledServices();
+  const filtered = services.filter((s) => s.id !== id);
+  localStorage.setItem(SCHEDULED_KEY, JSON.stringify(filtered));
+
+  const client = getSupabaseClient();
+  if (client) {
+    try {
+      const { error } = await client.from('scheduled_services').delete().eq('id', id);
+      if (error) throw new Error(error.message);
+    } catch (err: any) {
+      console.error('Supabase scheduled delete error:', err);
+      alert('Atención: el servicio agendado no pudo eliminarse de Supabase (' + (err?.message || 'error de conexión') + ').');
     }
   }
 

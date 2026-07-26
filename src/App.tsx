@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Client,
   CategoryOption,
@@ -11,6 +11,7 @@ import {
   ContractOption,
   TechnicianRoleOption,
   FieldServiceReport,
+  ScheduledService,
   ViewTab,
 } from './types';
 import {
@@ -31,6 +32,9 @@ import {
   getSupabaseClient,
   syncPendingReports,
   getPendingSyncCount,
+  getScheduledServices,
+  saveScheduledService,
+  deleteScheduledService,
 } from './lib/supabase';
 import { exportReportsToExcel } from './lib/excelExporter';
 import { LoginScreen } from './components/LoginScreen';
@@ -41,6 +45,7 @@ import { FormView } from './components/FormView';
 import { FormsListView } from './components/FormsListView';
 import { ClientsView } from './components/ClientsView';
 import { ConfigView } from './components/ConfigView';
+import { CalendarView } from './components/CalendarView';
 
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -52,9 +57,36 @@ export default function App() {
   const [serviceTypes, setServiceTypesState] = useState<ServiceTypeOption[]>([]);
   const [contracts, setContractsState] = useState<ContractOption[]>([]);
   const [technicians, setTechniciansState] = useState<TechnicianRoleOption[]>([]);
+  const [scheduledServices, setScheduledServices] = useState<ScheduledService[]>([]);
 
   const [editingReport, setEditingReport] = useState<FieldServiceReport | null>(null);
   const [pendingSync, setPendingSync] = useState(0);
+
+  // Guardia de cambios sin guardar en el formulario + clave de remonte para
+  // que "Nuevo Formulario" siempre abra un formulario limpio.
+  const formDirtyRef = useRef(false);
+  const [formResetKey, setFormResetKey] = useState(0);
+
+  const requestTabChange = (tab: ViewTab) => {
+    if (currentTab === 'nuevo_formulario' && tab !== currentTab && formDirtyRef.current) {
+      if (!confirm('Hay cambios sin guardar en el formulario. ¿Desea salir sin guardar?')) {
+        return;
+      }
+      formDirtyRef.current = false;
+    }
+    if (tab === 'nuevo_formulario') {
+      // Si se estaba editando (o escribiendo) y hay cambios, confirmar antes de resetear.
+      if (currentTab === 'nuevo_formulario' && formDirtyRef.current) {
+        if (!confirm('Hay cambios sin guardar en el formulario. ¿Desea descartarlos y crear uno nuevo?')) {
+          return;
+        }
+        formDirtyRef.current = false;
+      }
+      setEditingReport(null);
+      setFormResetKey((k) => k + 1);
+    }
+    setCurrentTab(tab);
+  };
 
   useEffect(() => {
     async function loadData() {
@@ -66,6 +98,9 @@ export default function App() {
 
       const loadedClients = await getClients();
       setClients(loadedClients);
+
+      const loadedScheduled = await getScheduledServices();
+      setScheduledServices(loadedScheduled);
 
       setCategoriesState(getCategories());
       setServiceTypesState(getServiceTypes());
@@ -114,6 +149,16 @@ export default function App() {
     setClients(updated);
   };
 
+  const handleSaveScheduledService = async (service: ScheduledService) => {
+    const updated = await saveScheduledService(service);
+    setScheduledServices(updated);
+  };
+
+  const handleDeleteScheduledService = async (id: string) => {
+    const updated = await deleteScheduledService(id);
+    setScheduledServices(updated);
+  };
+
   // Next auto-increment service number calculation (e.g. SVC-2026-002)
   // El año se toma dinámicamente: cada año nuevo el correlativo arranca en 001.
   const calculateNextServiceNumber = () => {
@@ -141,12 +186,7 @@ export default function App() {
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans">
       <Navbar
         currentTab={currentTab}
-        onTabChange={(tab) => {
-          if (tab === 'nuevo_formulario') {
-            setEditingReport(null);
-          }
-          setCurrentTab(tab);
-        }}
+        onTabChange={requestTabChange}
         onLogout={() => setIsAuthenticated(false)}
         onExportExcel={() => exportReportsToExcel(reports)}
         hasSupabase={hasSupabase}
@@ -156,20 +196,25 @@ export default function App() {
       <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
         <Sidebar
           currentTab={currentTab}
-          onTabChange={(tab) => {
-            if (tab === 'nuevo_formulario') {
-              setEditingReport(null);
-            }
-            setCurrentTab(tab);
-          }}
+          onTabChange={requestTabChange}
           reportsCount={reports.length}
         />
 
         <main className="flex-1 overflow-y-auto bg-slate-950">
           {currentTab === 'dashboard' && <DashboardView reports={reports} />}
 
+          {currentTab === 'calendario' && (
+            <CalendarView
+              services={scheduledServices}
+              clients={clients}
+              onSaveService={handleSaveScheduledService}
+              onDeleteService={handleDeleteScheduledService}
+            />
+          )}
+
           {currentTab === 'nuevo_formulario' && (
             <FormView
+              key={editingReport ? editingReport.id : `nuevo-${formResetKey}`}
               clients={clients}
               categories={categories}
               serviceTypes={serviceTypes}
@@ -178,6 +223,14 @@ export default function App() {
               initialReport={editingReport}
               onSaveReport={handleSaveReport}
               nextServiceNumber={calculateNextServiceNumber()}
+              onDirtyChange={(dirty) => {
+                formDirtyRef.current = dirty;
+              }}
+              onExit={() => {
+                formDirtyRef.current = false;
+                setEditingReport(null);
+                setCurrentTab('listado_formularios');
+              }}
             />
           )}
 

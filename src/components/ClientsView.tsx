@@ -267,7 +267,8 @@ export const ClientsView: React.FC<ClientsViewProps> = ({ clients, onSaveClient,
                     <td className="p-3.5 font-mono text-cyan-400 font-bold">{client.identificacion}</td>
                     <td className="p-3.5 font-semibold text-slate-200">{client.nombre}</td>
                     <td className="p-3.5 text-slate-400">{client.direccion}</td>
-                    <td className="p-3.5 text-right space-x-1">
+                    <td className="p-3.5">
+                      <div className="flex items-center justify-end gap-1">
                       <button
                         onClick={() => handleOpenEdit(client)}
                         className="p-1.5 bg-slate-800 hover:bg-slate-700 text-indigo-400 rounded cursor-pointer border border-slate-700"
@@ -286,6 +287,7 @@ export const ClientsView: React.FC<ClientsViewProps> = ({ clients, onSaveClient,
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
+                      </div>
                     </td>
                   </tr>
                 ))

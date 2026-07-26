@@ -135,42 +135,41 @@ export function generateCleanPDFReport(report: FieldServiceReport): void {
   doc.setFontSize(8.5);
   doc.setTextColor(darkGray[0], darkGray[1], darkGray[2]);
 
-  doc.setFont('helvetica', 'bold');
-  doc.text('Cliente:', 12, y);
-  doc.setFont('helvetica', 'normal');
-  doc.text(report.cliente || '-', 30, y);
+  // Grilla alineada en dos columnas fijas: etiquetas en x=12 y x=110,
+  // valores en x=44 y x=142. Todos los campos quedan en columnas parejas.
+  const COL1_LABEL = 12;
+  const COL1_VALUE = 44;
+  const COL2_LABEL = 110;
+  const COL2_VALUE = 142;
 
-  doc.setFont('helvetica', 'bold');
-  doc.text('Dirección:', 110, y);
-  doc.setFont('helvetica', 'normal');
-  doc.text(report.direccion || '-', 130, y);
+  const drawField = (label: string, value: string, xLabel: number, xValue: number) => {
+    doc.setFont('helvetica', 'bold');
+    doc.text(label, xLabel, y);
+    doc.setFont('helvetica', 'normal');
+    doc.text(value || '-', xValue, y);
+  };
 
+  // Fila 1: Cliente | Dirección
+  drawField('Cliente:', report.cliente, COL1_LABEL, COL1_VALUE);
+  drawField('Dirección:', report.direccion, COL2_LABEL, COL2_VALUE);
   y += 6;
-  doc.setFont('helvetica', 'bold');
-  doc.text('Tipo Servicio:', 12, y);
-  doc.setFont('helvetica', 'normal');
-  doc.text(report.tipoServicio || '-', 38, y);
 
-  doc.setFont('helvetica', 'bold');
-  doc.text('Categoría:', 70, y);
-  doc.setFont('helvetica', 'normal');
-  doc.text(report.categoria || '-', 90, y);
-
-  doc.setFont('helvetica', 'bold');
-  doc.text('Nº Contrato:', 135, y);
-  doc.setFont('helvetica', 'normal');
-  doc.text(report.numeroContrato || '-', 160, y);
-
+  // Fila 2: Tipo Servicio | Categoría
+  drawField('Tipo Servicio:', report.tipoServicio, COL1_LABEL, COL1_VALUE);
+  drawField('Categoría:', report.categoria, COL2_LABEL, COL2_VALUE);
   y += 6;
-  doc.setFont('helvetica', 'bold');
-  doc.text('Orden de Compra:', 12, y);
-  doc.setFont('helvetica', 'normal');
-  doc.text(report.numeroOrdenCompra || '-', 42, y);
 
+  // Fila 3: Nº Contrato (con ajuste de línea, los contratos suelen ser largos) | Orden Trabajo
   doc.setFont('helvetica', 'bold');
-  doc.text('Orden Trabajo:', 110, y);
+  doc.text('Nº Contrato:', COL1_LABEL, y);
   doc.setFont('helvetica', 'normal');
-  doc.text(report.numeroOrdenTrabajo || '-', 138, y);
+  const contratoLines = doc.splitTextToSize(report.numeroContrato || '-', 62);
+  doc.text(contratoLines, COL1_VALUE, y);
+  drawField('Orden Trabajo:', report.numeroOrdenTrabajo, COL2_LABEL, COL2_VALUE);
+  y += Math.max(6, contratoLines.length * 4.5 + 1.5);
+
+  // Fila 4: Orden de Compra
+  drawField('Orden de Compra:', report.numeroOrdenCompra, COL1_LABEL, COL1_VALUE);
 
   y += 10;
 
@@ -221,7 +220,7 @@ export function generateCleanPDFReport(report: FieldServiceReport): void {
   });
 
   doc.setFont('helvetica', 'bold');
-  doc.text(`TOTAL GENERAL HORAS TRABAJADAS: ${breakdown.totalTrabajo} hs | VIAJE: ${breakdown.totalViaje} hs`, 14, y + 2);
+  doc.text(`TOTAL GENERAL DE HORAS TRABAJADAS Y DE VIAJE: ${breakdown.totalTrabajo} hs`, 14, y + 2);
 
   y += 9;
 

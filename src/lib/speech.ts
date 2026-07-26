@@ -21,15 +21,27 @@ export function createSpeechRecognizer(
   recognition.continuous = true;
   recognition.interimResults = true;
 
+  // FIX duplicación de dictado: event.results acumula TODO lo dicho desde el
+  // inicio de la sesión. Recorrerlo completo en cada evento y encima concatenar
+  // en el componente producía texto repetido ("La La Bom La bomba La bomba...").
+  // Solución: emitir únicamente los resultados FINALES nuevos, una sola vez,
+  // llevando un puntero de hasta dónde ya se emitió.
+  let emittedUpTo = 0;
   recognition.onresult = (event: any) => {
-    let transcript = '';
+    let newFinalText = '';
     const results = event.results;
     if (results) {
-      for (let i = 0; i < results.length; i++) {
-        transcript += results[i][0].transcript;
+      for (let i = emittedUpTo; i < results.length; i++) {
+        if (results[i].isFinal) {
+          newFinalText += results[i][0].transcript;
+          emittedUpTo = i + 1;
+        }
       }
     }
-    onResult(transcript);
+    const clean = newFinalText.trim();
+    if (clean) {
+      onResult(clean);
+    }
   };
 
   recognition.onerror = (event: { error: string }) => {

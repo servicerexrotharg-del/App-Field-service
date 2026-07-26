@@ -29,6 +29,7 @@ import {
   Clock,
   CheckCircle2,
   AlertCircle,
+  X,
 } from 'lucide-react';
 
 interface FormViewProps {
@@ -40,6 +41,8 @@ interface FormViewProps {
   initialReport?: FieldServiceReport | null;
   onSaveReport: (report: FieldServiceReport) => Promise<void>;
   nextServiceNumber: string;
+  onDirtyChange?: (dirty: boolean) => void;
+  onExit?: () => void;
 }
 
 export const FormView: React.FC<FormViewProps> = ({
@@ -51,6 +54,8 @@ export const FormView: React.FC<FormViewProps> = ({
   initialReport,
   onSaveReport,
   nextServiceNumber,
+  onDirtyChange,
+  onExit,
 }) => {
   const formPrintRef = useRef<HTMLDivElement | null>(null);
 
@@ -118,6 +123,35 @@ export const FormView: React.FC<FormViewProps> = ({
   const [aclaracionSupervisor, setAclaracionSupervisor] = useState(initialReport?.firmas?.aclaracionSupervisor || 'Supervisor de Servicio');
 
   const [isSaving, setIsSaving] = useState(false);
+  const [isDirty, setIsDirty] = useState(false);
+  const firstRenderRef = useRef(true);
+
+  // Detección de cambios: cualquier modificación de un campo marca el
+  // formulario como "con cambios sin guardar" (se ignora el primer render).
+  useEffect(() => {
+    if (firstRenderRef.current) {
+      firstRenderRef.current = false;
+      return;
+    }
+    setIsDirty(true);
+    if (onDirtyChange) onDirtyChange(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    numeroServicio, fecha, cliente, direccion, tipoServicio, categoria,
+    numeroOrdenCompra, numeroContrato, numeroOrdenTrabajo, detalleProblema,
+    tecnicosInsumidos, diasHorasConsumidas, tareasRealizadas,
+    recomendacionConclusion, instrumentos, materiales, photos,
+    firmaTecnico, aclaracionTecnico, firmaCliente, aclaracionCliente,
+    firmaSupervisor, aclaracionSupervisor,
+  ]);
+
+  const handleExit = () => {
+    if (isDirty && !confirm('Hay cambios sin guardar. ¿Desea salir sin guardar?')) {
+      return;
+    }
+    if (onDirtyChange) onDirtyChange(false);
+    if (onExit) onExit();
+  };
   const savingRef = useRef(false);
   const [saveStatus, setSaveStatus] = useState<string | null>(null);
 
@@ -296,6 +330,8 @@ export const FormView: React.FC<FormViewProps> = ({
 
     try {
       await onSaveReport(reportToSave);
+      setIsDirty(false);
+      if (onDirtyChange) onDirtyChange(false);
       const pendientes = getPendingSyncCount();
       setSaveStatus(
         pendientes > 0
@@ -344,6 +380,15 @@ export const FormView: React.FC<FormViewProps> = ({
         </div>
 
         <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={handleExit}
+            className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 font-semibold rounded-lg text-xs sm:text-sm flex items-center gap-2 transition-all cursor-pointer"
+            title="Volver al listado de formularios"
+          >
+            <X className="w-4 h-4" />
+            <span>Salir</span>
+          </button>
           <button
             type="button"
             onClick={handleSaveAndPDF}

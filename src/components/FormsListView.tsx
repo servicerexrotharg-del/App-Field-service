@@ -133,11 +133,12 @@ export const FormsListView: React.FC<FormsListViewProps> = ({
                       </span>
                       <span className="text-slate-400 text-[11px]">{report.categoria}</span>
                     </td>
-                    <td className="p-3.5 text-center font-mono">
+                    <td className="p-3.5 text-center font-mono whitespace-nowrap">
                       <span className="text-slate-200 font-bold">{breakdown.totalTrabajo} hs</span>
-                      <span className="block text-[9px] text-slate-500">Viaje: {breakdown.totalViaje} hs</span>
+                      <span className="block text-[9px] text-slate-500 whitespace-nowrap">Viaje: {breakdown.totalViaje} hs</span>
                     </td>
-                    <td className="p-3.5 text-right space-x-1.5">
+                    <td className="p-3.5">
+                      <div className="flex items-center justify-end gap-1.5">
                       <button
                         onClick={() => generateCleanPDFReport(report)}
                         title="Descargar PDF"
@@ -163,6 +164,7 @@ export const FormsListView: React.FC<FormsListViewProps> = ({
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
+                      </div>
                     </td>
                   </tr>
                 );
