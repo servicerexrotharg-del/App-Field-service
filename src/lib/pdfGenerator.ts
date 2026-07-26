@@ -3,6 +3,7 @@ import html2canvas from 'html2canvas';
 import { FieldServiceReport } from '../types';
 import { calculateReportHourBreakdown, formatHoursLabel } from './hoursCalculator';
 import { LOGO_BASE64 } from '../logo';
+import { getServiceTypes } from './supabase';
 
 export async function generatePDFFromElement(element: HTMLElement, report: FieldServiceReport): Promise<void> {
   const canvas = await html2canvas(element, {
@@ -154,10 +155,18 @@ export function generateCleanPDFReport(report: FieldServiceReport): void {
   drawField('Dirección:', report.direccion, COL2_LABEL, COL2_VALUE);
   y += 6;
 
-  // Fila 2: Tipo Servicio | Categoría
-  drawField('Tipo Servicio:', report.tipoServicio, COL1_LABEL, COL1_VALUE);
+  // Fila 2: Tipo Servicio (código + descripción) | Categoría
+  // La descripción se toma de la tabla maestra editable en Configuración,
+  // ej: "IH - Inspección Hidráulica / Mantenimiento".
+  const tipoSt = getServiceTypes().find((st) => st.codigo === report.tipoServicio);
+  const tipoServicioTexto = tipoSt ? `${tipoSt.codigo} - ${tipoSt.nombre}` : (report.tipoServicio || '-');
+  doc.setFont('helvetica', 'bold');
+  doc.text('Tipo Servicio:', COL1_LABEL, y);
+  doc.setFont('helvetica', 'normal');
+  const tipoLines = doc.splitTextToSize(tipoServicioTexto, 62);
+  doc.text(tipoLines, COL1_VALUE, y);
   drawField('Categoría:', report.categoria, COL2_LABEL, COL2_VALUE);
-  y += 6;
+  y += Math.max(6, tipoLines.length * 4.5 + 1.5);
 
   // Fila 3: Nº Contrato (con ajuste de línea, los contratos suelen ser largos) | Orden Trabajo
   doc.setFont('helvetica', 'bold');

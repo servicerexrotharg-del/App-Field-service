@@ -9,7 +9,7 @@ import {
   getSupabaseConfig,
   saveSupabaseConfig,
 } from '../lib/supabase';
-import { Settings, Database, Plus, Trash2, Save, CheckCircle2 } from 'lucide-react';
+import { Settings, Database, Plus, Trash2, Save, CheckCircle2, Pencil, Check, X } from 'lucide-react';
 
 interface ConfigViewProps {
   categories: CategoryOption[];
@@ -51,6 +51,53 @@ export const ConfigView: React.FC<ConfigViewProps> = ({
   const [newContractDesc, setNewContractDesc] = useState('');
   // New Tech Role Input
   const [newTechRole, setNewTechRole] = useState('');
+
+  // ===== Estados de edición inline (un elemento en edición por tabla) =====
+  const [editCatId, setEditCatId] = useState<string | null>(null);
+  const [editCatValue, setEditCatValue] = useState('');
+
+  const [editStId, setEditStId] = useState<string | null>(null);
+  const [editStCode, setEditStCode] = useState('');
+  const [editStName, setEditStName] = useState('');
+
+  const [editConId, setEditConId] = useState<string | null>(null);
+  const [editConNum, setEditConNum] = useState('');
+  const [editConDesc, setEditConDesc] = useState('');
+
+  const [editTechId, setEditTechId] = useState<string | null>(null);
+  const [editTechValue, setEditTechValue] = useState('');
+
+  const saveEditCategory = () => {
+    if (!editCatId || !editCatValue.trim()) return;
+    onSaveCategories(categories.map((c) => (c.id === editCatId ? { ...c, nombre: editCatValue.trim() } : c)));
+    setEditCatId(null);
+  };
+
+  const saveEditServiceType = () => {
+    if (!editStId || !editStCode.trim() || !editStName.trim()) return;
+    onSaveServiceTypes(
+      serviceTypes.map((st) =>
+        st.id === editStId ? { ...st, codigo: editStCode.trim().toUpperCase(), nombre: editStName.trim() } : st
+      )
+    );
+    setEditStId(null);
+  };
+
+  const saveEditContract = () => {
+    if (!editConId || !editConNum.trim()) return;
+    onSaveContracts(
+      contracts.map((c) =>
+        c.id === editConId ? { ...c, numero: editConNum.trim(), descripcion: editConDesc.trim() } : c
+      )
+    );
+    setEditConId(null);
+  };
+
+  const saveEditTechnician = () => {
+    if (!editTechId || !editTechValue.trim()) return;
+    onSaveTechnicians(technicians.map((t) => (t.id === editTechId ? { ...t, nombre: editTechValue.trim() } : t)));
+    setEditTechId(null);
+  };
 
   const handleSaveDbConfig = (e: React.FormEvent) => {
     e.preventDefault();
@@ -204,11 +251,43 @@ export const ConfigView: React.FC<ConfigViewProps> = ({
 
           <div className="space-y-1.5">
             {categories.map((c) => (
-              <div key={c.id} className="flex justify-between items-center bg-slate-950 p-2 rounded border border-slate-800 text-xs">
-                <span className="text-slate-200 font-medium">{c.nombre}</span>
-                <button onClick={() => handleRemoveCategory(c.id)} className="text-rose-400 hover:text-rose-300">
-                  <Trash2 className="w-3.5 h-3.5" />
-                </button>
+              <div key={c.id} className="flex justify-between items-center gap-2 bg-slate-950 p-2 rounded border border-slate-800 text-xs">
+                {editCatId === c.id ? (
+                  <>
+                    <input
+                      type="text"
+                      value={editCatValue}
+                      onChange={(e) => setEditCatValue(e.target.value)}
+                      autoFocus
+                      className="flex-1 bg-slate-800 border border-cyan-500/60 rounded px-2 py-1 text-xs text-slate-200"
+                    />
+                    <button onClick={saveEditCategory} title="Guardar" className="text-emerald-400 hover:text-emerald-300">
+                      <Check className="w-3.5 h-3.5" />
+                    </button>
+                    <button onClick={() => setEditCatId(null)} title="Cancelar" className="text-slate-400 hover:text-slate-200">
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <span className="text-slate-200 font-medium">{c.nombre}</span>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => {
+                          setEditCatId(c.id);
+                          setEditCatValue(c.nombre);
+                        }}
+                        title="Editar"
+                        className="text-indigo-400 hover:text-indigo-300"
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                      </button>
+                      <button onClick={() => handleRemoveCategory(c.id)} title="Eliminar" className="text-rose-400 hover:text-rose-300">
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </>
+                )}
               </div>
             ))}
           </div>
@@ -245,14 +324,53 @@ export const ConfigView: React.FC<ConfigViewProps> = ({
 
           <div className="space-y-1.5">
             {serviceTypes.map((st) => (
-              <div key={st.id} className="flex justify-between items-center bg-slate-950 p-2 rounded border border-slate-800 text-xs">
-                <div>
-                  <span className="font-mono text-cyan-400 font-bold mr-2">{st.codigo}</span>
-                  <span className="text-slate-300">{st.nombre}</span>
-                </div>
-                <button onClick={() => handleRemoveServiceType(st.id)} className="text-rose-400 hover:text-rose-300">
-                  <Trash2 className="w-3.5 h-3.5" />
-                </button>
+              <div key={st.id} className="flex justify-between items-center gap-2 bg-slate-950 p-2 rounded border border-slate-800 text-xs">
+                {editStId === st.id ? (
+                  <>
+                    <input
+                      type="text"
+                      value={editStCode}
+                      onChange={(e) => setEditStCode(e.target.value)}
+                      className="w-14 bg-slate-800 border border-cyan-500/60 rounded px-2 py-1 text-xs text-slate-200 font-mono"
+                    />
+                    <input
+                      type="text"
+                      value={editStName}
+                      onChange={(e) => setEditStName(e.target.value)}
+                      autoFocus
+                      className="flex-1 bg-slate-800 border border-cyan-500/60 rounded px-2 py-1 text-xs text-slate-200"
+                    />
+                    <button onClick={saveEditServiceType} title="Guardar" className="text-emerald-400 hover:text-emerald-300">
+                      <Check className="w-3.5 h-3.5" />
+                    </button>
+                    <button onClick={() => setEditStId(null)} title="Cancelar" className="text-slate-400 hover:text-slate-200">
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <div>
+                      <span className="font-mono text-cyan-400 font-bold mr-2">{st.codigo}</span>
+                      <span className="text-slate-300">{st.nombre}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => {
+                          setEditStId(st.id);
+                          setEditStCode(st.codigo);
+                          setEditStName(st.nombre);
+                        }}
+                        title="Editar"
+                        className="text-indigo-400 hover:text-indigo-300"
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                      </button>
+                      <button onClick={() => handleRemoveServiceType(st.id)} title="Eliminar" className="text-rose-400 hover:text-rose-300">
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </>
+                )}
               </div>
             ))}
           </div>
@@ -289,14 +407,53 @@ export const ConfigView: React.FC<ConfigViewProps> = ({
 
           <div className="space-y-1.5">
             {contracts.map((con) => (
-              <div key={con.id} className="flex justify-between items-center bg-slate-950 p-2 rounded border border-slate-800 text-xs">
-                <div>
-                  <span className="font-mono text-cyan-400 font-bold mr-2">{con.numero}</span>
-                  <span className="text-slate-300">{con.descripcion}</span>
-                </div>
-                <button onClick={() => handleRemoveContract(con.id)} className="text-rose-400 hover:text-rose-300">
-                  <Trash2 className="w-3.5 h-3.5" />
-                </button>
+              <div key={con.id} className="flex justify-between items-center gap-2 bg-slate-950 p-2 rounded border border-slate-800 text-xs">
+                {editConId === con.id ? (
+                  <>
+                    <input
+                      type="text"
+                      value={editConNum}
+                      onChange={(e) => setEditConNum(e.target.value)}
+                      className="w-24 bg-slate-800 border border-cyan-500/60 rounded px-2 py-1 text-xs text-slate-200 font-mono"
+                    />
+                    <input
+                      type="text"
+                      value={editConDesc}
+                      onChange={(e) => setEditConDesc(e.target.value)}
+                      autoFocus
+                      className="flex-1 bg-slate-800 border border-cyan-500/60 rounded px-2 py-1 text-xs text-slate-200"
+                    />
+                    <button onClick={saveEditContract} title="Guardar" className="text-emerald-400 hover:text-emerald-300">
+                      <Check className="w-3.5 h-3.5" />
+                    </button>
+                    <button onClick={() => setEditConId(null)} title="Cancelar" className="text-slate-400 hover:text-slate-200">
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <div>
+                      <span className="font-mono text-cyan-400 font-bold mr-2">{con.numero}</span>
+                      <span className="text-slate-300">{con.descripcion}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => {
+                          setEditConId(con.id);
+                          setEditConNum(con.numero);
+                          setEditConDesc(con.descripcion);
+                        }}
+                        title="Editar"
+                        className="text-indigo-400 hover:text-indigo-300"
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                      </button>
+                      <button onClick={() => handleRemoveContract(con.id)} title="Eliminar" className="text-rose-400 hover:text-rose-300">
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </>
+                )}
               </div>
             ))}
           </div>
@@ -326,11 +483,43 @@ export const ConfigView: React.FC<ConfigViewProps> = ({
 
           <div className="space-y-1.5">
             {technicians.map((t) => (
-              <div key={t.id} className="flex justify-between items-center bg-slate-950 p-2 rounded border border-slate-800 text-xs">
-                <span className="text-slate-200 font-medium">{t.nombre}</span>
-                <button onClick={() => handleRemoveTechnicianRole(t.id)} className="text-rose-400 hover:text-rose-300">
-                  <Trash2 className="w-3.5 h-3.5" />
-                </button>
+              <div key={t.id} className="flex justify-between items-center gap-2 bg-slate-950 p-2 rounded border border-slate-800 text-xs">
+                {editTechId === t.id ? (
+                  <>
+                    <input
+                      type="text"
+                      value={editTechValue}
+                      onChange={(e) => setEditTechValue(e.target.value)}
+                      autoFocus
+                      className="flex-1 bg-slate-800 border border-cyan-500/60 rounded px-2 py-1 text-xs text-slate-200"
+                    />
+                    <button onClick={saveEditTechnician} title="Guardar" className="text-emerald-400 hover:text-emerald-300">
+                      <Check className="w-3.5 h-3.5" />
+                    </button>
+                    <button onClick={() => setEditTechId(null)} title="Cancelar" className="text-slate-400 hover:text-slate-200">
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <span className="text-slate-200 font-medium">{t.nombre}</span>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => {
+                          setEditTechId(t.id);
+                          setEditTechValue(t.nombre);
+                        }}
+                        title="Editar"
+                        className="text-indigo-400 hover:text-indigo-300"
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                      </button>
+                      <button onClick={() => handleRemoveTechnicianRole(t.id)} title="Eliminar" className="text-rose-400 hover:text-rose-300">
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </>
+                )}
               </div>
             ))}
           </div>
