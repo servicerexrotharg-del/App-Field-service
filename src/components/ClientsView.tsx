@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Client } from '../types';
-import { Plus, Edit, Trash2, Building, Search, Save, X, RefreshCw, Database, CheckCircle2, AlertCircle } from 'lucide-react';
-import { syncClientsToSupabase, resetClientsToOfficialList } from '../lib/supabase';
+import { Plus, Edit, Trash2, Building, Search, Save, X } from 'lucide-react';
 
 interface ClientsViewProps {
   clients: Client[];
@@ -17,8 +16,6 @@ export const ClientsView: React.FC<ClientsViewProps> = ({ clients, onSaveClient,
   const [direccion, setDireccion] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
 
-  const [isSyncing, setIsSyncing] = useState(false);
-  const [syncStatus, setSyncStatus] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
 
   const handleOpenNew = () => {
     setEditingClient({
@@ -54,26 +51,6 @@ export const ClientsView: React.FC<ClientsViewProps> = ({ clients, onSaveClient,
     setEditingClient(null);
   };
 
-  const handleSyncSupabase = async () => {
-    setIsSyncing(true);
-    setSyncStatus(null);
-    const res = await syncClientsToSupabase();
-    setIsSyncing(false);
-    if (res.success) {
-      setSyncStatus({ type: 'success', msg: `¡Se sincronizaron ${res.count} clientes con Supabase correctamente!` });
-    } else {
-      setSyncStatus({ type: 'error', msg: res.error || 'Error al sincronizar con Supabase' });
-    }
-  };
-
-  const handleResetList = async () => {
-    if (confirm('¿Desea restaurar la base de datos de clientes con la lista oficial de 376 clientes del archivo CSV?')) {
-      await resetClientsToOfficialList();
-      if (onRefreshClients) await onRefreshClients();
-      setSyncStatus({ type: 'success', msg: 'Lista de clientes restablecida a los 376 clientes oficiales del CSV.' });
-    }
-  };
-
   // Filter clients
   const filteredClients = clients.filter((c) => {
     const query = searchTerm.toLowerCase().trim();
@@ -95,29 +72,11 @@ export const ClientsView: React.FC<ClientsViewProps> = ({ clients, onSaveClient,
             Gestión de Clientes Supabase
           </h2>
           <p className="text-xs text-slate-400 mt-0.5">
-            Base oficial de {clients.length} clientes. Busque, edite o agregue nuevos clientes corporativos.
+            Base de {clients.length} clientes. Busque, edite o agregue nuevos clientes con el botón Agregar Cliente.
           </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          <button
-            onClick={handleResetList}
-            className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-lg text-xs flex items-center gap-1.5 cursor-pointer"
-            title="Restaurar a los 376 clientes oficiales"
-          >
-            <RefreshCw className="w-3.5 h-3.5 text-amber-400" />
-            <span>Cargar Lista Oficial (376)</span>
-          </button>
-
-          <button
-            onClick={handleSyncSupabase}
-            disabled={isSyncing}
-            className="px-3 py-1.5 bg-emerald-700 hover:bg-emerald-600 disabled:opacity-50 text-white font-medium rounded-lg text-xs flex items-center gap-1.5 cursor-pointer shadow-sm"
-          >
-            <Database className="w-3.5 h-3.5" />
-            <span>{isSyncing ? 'Sincronizando...' : 'Subir a Supabase'}</span>
-          </button>
-
           <button
             onClick={handleOpenNew}
             className="px-3.5 py-1.5 bg-cyan-600 hover:bg-cyan-500 text-white font-semibold rounded-lg text-xs flex items-center gap-1.5 cursor-pointer shadow-sm"
@@ -129,28 +88,6 @@ export const ClientsView: React.FC<ClientsViewProps> = ({ clients, onSaveClient,
       </div>
 
       {/* Sync Status Alert */}
-      {syncStatus && (
-        <div
-          className={`p-3 rounded-lg border text-xs flex items-center justify-between gap-2 ${
-            syncStatus.type === 'success'
-              ? 'bg-emerald-950/80 border-emerald-800 text-emerald-200'
-              : 'bg-rose-950/80 border-rose-800 text-rose-200'
-          }`}
-        >
-          <div className="flex items-center gap-2">
-            {syncStatus.type === 'success' ? (
-              <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-            ) : (
-              <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
-            )}
-            <span>{syncStatus.msg}</span>
-          </div>
-          <button onClick={() => setSyncStatus(null)} className="text-slate-400 hover:text-white">
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-      )}
-
       {/* Search and Filters Bar */}
       <div className="flex flex-col sm:flex-row justify-between items-center gap-3 bg-slate-900/60 p-3 rounded-xl border border-slate-800">
         <div className="relative w-full sm:w-80">

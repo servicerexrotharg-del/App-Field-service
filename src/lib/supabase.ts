@@ -1114,7 +1114,68 @@ export async function deleteScheduledService(id: string): Promise<ScheduledServi
   return filtered;
 }
 
+// ====================================================================
 // OPTIONS MANAGEMENT (Categories, Service Types, Contracts, Technicians)
+// Las 4 tablas maestras se espejan en la tabla app_options de Supabase
+// (una fila por listado) para que las ediciones hechas en un dispositivo
+// se vean en todos los demás. Lectura al iniciar la app; escritura
+// inmediata en cada alta/edición/eliminación.
+// ====================================================================
+function optionsStorageKeyFor(supabaseKey: string): string | null {
+  switch (supabaseKey) {
+    case 'categories':
+      return STORAGE_KEYS.CATEGORIES;
+    case 'service_types':
+      return STORAGE_KEYS.SERVICE_TYPES;
+    case 'contracts':
+      return STORAGE_KEYS.CONTRACTS;
+    case 'technician_roles':
+      return STORAGE_KEYS.TECHNICIANS;
+    default:
+      return null;
+  }
+}
+
+/** Baja las 4 tablas maestras desde Supabase al iniciar la app (si existen). */
+export async function syncOptionsFromSupabase(): Promise<void> {
+  const client = getSupabaseClient();
+  if (!client) return;
+  try {
+    const { data, error } = await client.from('app_options').select('*');
+    if (!error && data) {
+      data.forEach((row: any) => {
+        const storageKey = optionsStorageKeyFor(row.key);
+        if (storageKey && Array.isArray(row.items)) {
+          localStorage.setItem(storageKey, JSON.stringify(row.items));
+        }
+      });
+    }
+  } catch (err) {
+    console.warn('Supabase options fetch error:', err);
+  }
+}
+
+/** Sube un listado maestro a Supabase tras cada edición. */
+async function pushOptionsToSupabase(supabaseKey: string, items: any[]): Promise<void> {
+  const client = getSupabaseClient();
+  if (!client) return;
+  try {
+    const { error } = await client.from('app_options').upsert({
+      key: supabaseKey,
+      items,
+      updated_at: new Date().toISOString(),
+    });
+    if (error) throw new Error(error.message);
+  } catch (err: any) {
+    console.error('Supabase options save error:', err);
+    alert(
+      'Atención: los cambios en las tablas de configuración no pudieron subirse a Supabase (' +
+        (err?.message || 'error de conexión') +
+        '). Verifique que la tabla app_options exista.'
+    );
+  }
+}
+
 export function getStoredOptions<T>(key: string, initial: T[]): T[] {
   const local = localStorage.getItem(key);
   if (local) {
@@ -1133,13 +1194,25 @@ export function saveStoredOptions<T>(key: string, items: T[]): void {
 }
 
 export const getCategories = () => getStoredOptions(STORAGE_KEYS.CATEGORIES, INITIAL_CATEGORIES);
-export const saveCategories = (cats: CategoryOption[]) => saveStoredOptions(STORAGE_KEYS.CATEGORIES, cats);
+export const saveCategories = (cats: CategoryOption[]) => {
+  saveStoredOptions(STORAGE_KEYS.CATEGORIES, cats);
+  void pushOptionsToSupabase('categories', cats);
+};
 
 export const getServiceTypes = () => getStoredOptions(STORAGE_KEYS.SERVICE_TYPES, INITIAL_SERVICE_TYPES);
-export const saveServiceTypes = (st: ServiceTypeOption[]) => saveStoredOptions(STORAGE_KEYS.SERVICE_TYPES, st);
+export const saveServiceTypes = (st: ServiceTypeOption[]) => {
+  saveStoredOptions(STORAGE_KEYS.SERVICE_TYPES, st);
+  void pushOptionsToSupabase('service_types', st);
+};
 
 export const getContracts = () => getStoredOptions(STORAGE_KEYS.CONTRACTS, INITIAL_CONTRACTS);
-export const saveContracts = (c: ContractOption[]) => saveStoredOptions(STORAGE_KEYS.CONTRACTS, c);
+export const saveContracts = (c: ContractOption[]) => {
+  saveStoredOptions(STORAGE_KEYS.CONTRACTS, c);
+  void pushOptionsToSupabase('contracts', c);
+};
 
 export const getTechnicians = () => getStoredOptions(STORAGE_KEYS.TECHNICIANS, INITIAL_TECHNICIAN_ROLES);
-export const saveTechnicians = (t: TechnicianRoleOption[]) => saveStoredOptions(STORAGE_KEYS.TECHNICIANS, t);
+export const saveTechnicians = (t: TechnicianRoleOption[]) => {
+  saveStoredOptions(STORAGE_KEYS.TECHNICIANS, t);
+  void pushOptionsToSupabase('technician_roles', t);
+};

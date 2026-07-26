@@ -32,6 +32,7 @@ import {
   getSupabaseClient,
   syncPendingReports,
   getPendingSyncCount,
+  syncOptionsFromSupabase,
   getScheduledServices,
   saveScheduledService,
   deleteScheduledService,
@@ -92,6 +93,9 @@ export default function App() {
     async function loadData() {
       // Al iniciar, intentar subir lo que quedó pendiente de sesiones anteriores.
       await syncPendingReports();
+      // Bajar las tablas maestras (categorías, tipos, contratos, roles) desde
+      // Supabase para que las ediciones se vean en todos los dispositivos.
+      await syncOptionsFromSupabase();
       const loadedReports = await getReports();
       setReports(loadedReports);
       setPendingSync(getPendingSyncCount());
