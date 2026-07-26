@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Client, ScheduledService, ScheduledTechnician, ServiceStatus } from '../types';
+import { ClientPicker } from './ClientPicker';
 import {
   CalendarDays,
   ChevronLeft,
@@ -434,19 +435,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
               {/* Cliente con autocompletado sobre la base de clientes */}
               <div className="space-y-1">
                 <label className="text-[10px] font-bold uppercase text-slate-400">Cliente</label>
-                <input
-                  type="text"
-                  list="calendar-clients-list"
-                  value={fCliente}
-                  onChange={(e) => setFCliente(e.target.value)}
-                  placeholder="Escriba para buscar el cliente..."
-                  className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-cyan-500"
-                />
-                <datalist id="calendar-clients-list">
-                  {clients.map((c) => (
-                    <option key={c.id} value={c.nombre} />
-                  ))}
-                </datalist>
+                <ClientPicker clients={clients} value={fCliente} onChange={setFCliente} />
               </div>
 
               {/* Motivo */}
@@ -462,9 +451,11 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
               </div>
 
               {/* Fechas y estado */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {/* Alturas fijas + appearance-none: en iPad/Safari los inputs de
+                  fecha tienen altura intrínseca distinta y desalineaban la fila */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold uppercase text-slate-400">Fecha Inicio</label>
+                  <label className="text-[10px] font-bold uppercase text-slate-400 block">Fecha Inicio</label>
                   <input
                     type="date"
                     value={fInicio}
@@ -472,25 +463,25 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                       setFInicio(e.target.value);
                       if (fFin < e.target.value) setFFin(e.target.value);
                     }}
-                    className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-200"
+                    className="w-full h-[38px] appearance-none bg-slate-800 border border-slate-700 rounded-lg px-3 text-xs text-slate-200"
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold uppercase text-slate-400">Fecha Fin</label>
+                  <label className="text-[10px] font-bold uppercase text-slate-400 block">Fecha Fin</label>
                   <input
                     type="date"
                     value={fFin}
                     min={fInicio}
                     onChange={(e) => setFFin(e.target.value)}
-                    className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-200"
+                    className="w-full h-[38px] appearance-none bg-slate-800 border border-slate-700 rounded-lg px-3 text-xs text-slate-200"
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold uppercase text-slate-400">Estado</label>
+                  <label className="text-[10px] font-bold uppercase text-slate-400 block">Estado</label>
                   <select
                     value={fEstado}
                     onChange={(e) => setFEstado(e.target.value as ServiceStatus)}
-                    className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-200 cursor-pointer"
+                    className="w-full h-[38px] bg-slate-800 border border-slate-700 rounded-lg px-3 text-xs text-slate-200 cursor-pointer"
                   >
                     {ESTADOS.map((e) => (
                       <option key={e} value={e}>
@@ -544,11 +535,20 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                     <input
                       type="number"
                       min={1}
-                      value={t.cantidad}
+                      value={t.cantidad === 0 ? '' : t.cantidad}
                       onChange={(e) => {
+                        const val = e.target.value;
+                        const parsed = val === '' ? 0 : parseInt(val, 10);
                         const copy = [...fTecnicos];
-                        copy[idx] = { ...t, cantidad: Math.max(1, parseInt(e.target.value, 10) || 1) };
+                        copy[idx] = { ...t, cantidad: isNaN(parsed) ? 0 : parsed };
                         setFTecnicos(copy);
+                      }}
+                      onBlur={() => {
+                        if (t.cantidad < 1) {
+                          const copy = [...fTecnicos];
+                          copy[idx] = { ...t, cantidad: 1 };
+                          setFTecnicos(copy);
+                        }
                       }}
                       className="col-span-4 bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-200"
                     />

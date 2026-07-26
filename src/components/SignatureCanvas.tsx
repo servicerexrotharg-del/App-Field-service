@@ -117,7 +117,7 @@ export const SignatureCanvas: React.FC<SignatureCanvasProps> = ({ label, initial
 
   return (
     <div className="bg-slate-900/60 border border-slate-800 rounded-lg p-3 flex flex-col space-y-2">
-      <div className="flex justify-between items-center">
+      <div className="flex justify-between items-start min-h-[36px]">
         <span className="text-[11px] font-semibold uppercase text-cyan-400 tracking-wide">{label}</span>
         <div className="flex items-center gap-1">
           <label

@@ -15,6 +15,7 @@ import {
 } from '../types';
 import { VoiceInputButton } from './VoiceInputButton';
 import { SignatureCanvas } from './SignatureCanvas';
+import { ClientPicker } from './ClientPicker';
 import { calculateReportHourBreakdown, formatHoursLabel } from '../lib/hoursCalculator';
 import { generatePDFFromElement, generateCleanPDFReport } from '../lib/pdfGenerator';
 import { getPendingSyncCount } from '../lib/supabase';
@@ -469,17 +470,11 @@ export const FormView: React.FC<FormViewProps> = ({
 
             <div className="space-y-1">
               <label className="text-[10px] font-bold uppercase text-slate-400">Cliente</label>
-              <select
+              <ClientPicker
+                clients={clients}
                 value={cliente}
-                onChange={(e) => handleClientChange(e.target.value)}
-                className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-cyan-500"
-              >
-                {clients.map((c) => (
-                  <option key={c.id} value={c.nombre}>
-                    {c.nombre}
-                  </option>
-                ))}
-              </select>
+                onChange={(nombre) => handleClientChange(nombre)}
+              />
             </div>
 
             <div className="space-y-1 sm:col-span-2">
@@ -965,11 +960,20 @@ export const FormView: React.FC<FormViewProps> = ({
                 <input
                   type="number"
                   min={1}
-                  value={inst.cantidad}
+                  value={inst.cantidad === 0 ? '' : inst.cantidad}
                   onChange={(e) => {
+                    const val = e.target.value;
+                    const parsed = val === '' ? 0 : parseInt(val, 10);
                     const updated = [...instrumentos];
-                    updated[idx].cantidad = parseInt(e.target.value) || 1;
+                    updated[idx].cantidad = isNaN(parsed) ? 0 : parsed;
                     setInstrumentos(updated);
+                  }}
+                  onBlur={() => {
+                    if (inst.cantidad < 1) {
+                      const updated = [...instrumentos];
+                      updated[idx].cantidad = 1;
+                      setInstrumentos(updated);
+                    }
                   }}
                   className="w-16 bg-slate-800 border border-slate-700 rounded px-2 py-1 text-xs text-slate-200"
                 />
@@ -1021,11 +1025,20 @@ export const FormView: React.FC<FormViewProps> = ({
                 <input
                   type="number"
                   min={1}
-                  value={mat.cantidad}
+                  value={mat.cantidad === 0 ? '' : mat.cantidad}
                   onChange={(e) => {
+                    const val = e.target.value;
+                    const parsed = val === '' ? 0 : parseInt(val, 10);
                     const updated = [...materiales];
-                    updated[idx].cantidad = parseInt(e.target.value) || 1;
+                    updated[idx].cantidad = isNaN(parsed) ? 0 : parsed;
                     setMateriales(updated);
+                  }}
+                  onBlur={() => {
+                    if (mat.cantidad < 1) {
+                      const updated = [...materiales];
+                      updated[idx].cantidad = 1;
+                      setMateriales(updated);
+                    }
                   }}
                   className="col-span-2 sm:col-span-1 bg-slate-800 border border-slate-700 rounded px-2 py-1 text-xs text-slate-200"
                 />
@@ -1150,7 +1163,7 @@ export const FormView: React.FC<FormViewProps> = ({
                 onSave={setFirmaTecnico}
               />
               <div className="space-y-1">
-                <label className="text-[10px] font-bold uppercase text-slate-400">
+                <label className="text-[10px] font-bold uppercase text-slate-400 block min-h-[26px] flex items-end">
                   Aclaración de Firma Técnico
                 </label>
                 <input
@@ -1171,7 +1184,7 @@ export const FormView: React.FC<FormViewProps> = ({
                 onSave={setFirmaCliente}
               />
               <div className="space-y-1">
-                <label className="text-[10px] font-bold uppercase text-slate-400">
+                <label className="text-[10px] font-bold uppercase text-slate-400 block min-h-[26px] flex items-end">
                   Aclaración de Firma Cliente
                 </label>
                 <input
@@ -1192,7 +1205,7 @@ export const FormView: React.FC<FormViewProps> = ({
                 onSave={setFirmaSupervisor}
               />
               <div className="space-y-1">
-                <label className="text-[10px] font-bold uppercase text-slate-400">
+                <label className="text-[10px] font-bold uppercase text-slate-400 block min-h-[26px] flex items-end">
                   Aclaración de Firma Supervisor
                 </label>
                 <input
